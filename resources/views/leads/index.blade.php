@@ -389,7 +389,8 @@
                             <th class="py-2 px-2 border-r border-slate-200 min-w-[130px]">Note / Activity</th>
                             <th class="py-2 px-1 text-center min-w-[90px]">Actions</th>
                         </tr>
-                    </thead                    <tbody class="divide-y divide-slate-200 text-slate-800" id="leadsTableBody">
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-800" id="leadsTableBody">
                         @foreach($leads as $index => $lead)
                             @php
                                 $currentScopes = is_array($lead->work_scope) ? $lead->work_scope : [];
@@ -641,9 +642,6 @@
                         </span>
                     </button>
                 @endforeach
-            </div>
-        </div>ody>
-                </table>
             </div>
         </div>
     </div>
