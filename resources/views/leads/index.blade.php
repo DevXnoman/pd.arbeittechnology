@@ -263,6 +263,11 @@
             </button>
             <span class="material-symbols-outlined text-primary text-[22px]">contacts</span>
             <h2 class="font-headline-md font-bold text-base text-primary">Lead Tracking Directory</h2>
+            <!-- Google Sheets Style Cloud Sync Status Indicator -->
+            <div class="hidden sm:flex items-center space-x-1.5 text-xs pl-3 border-l border-slate-200" id="cloudSyncIndicator" title="All edits automatically save to cloud in real-time">
+                <span class="material-symbols-outlined text-[17px] text-emerald-600 transition-all duration-200" id="cloudSyncIcon">cloud_done</span>
+                <span class="text-[11px] font-medium text-slate-500" id="cloudSyncText">All changes saved</span>
+            </div>
         </div>
         <div class="flex items-center space-x-2.5 w-full sm:w-auto justify-end">
             <!-- Search Form -->
@@ -309,7 +314,7 @@
             </div>
 
             <div class="flex items-center space-x-2 text-xs text-slate-500 font-medium shrink-0 px-2">
-                <span>Total: <strong class="text-primary font-bold">{{ $totalLeads }}</strong> leads</span>
+                <span>Total: <strong class="text-primary font-bold" id="totalLeadsCount">{{ $totalLeads }}</strong> leads</span>
                 <span>•</span>
                 <span>Won: <strong class="text-emerald-600 font-bold">{{ $convertedCount }}</strong></span>
             </div>
@@ -333,140 +338,116 @@
                             <th class="py-2 px-2 border-r border-slate-200 min-w-[130px]">Note / Activity</th>
                             <th class="py-2 px-1 text-center min-w-[90px]">Actions</th>
                         </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-200 text-slate-800">
+                    </thead                    <tbody class="divide-y divide-slate-200 text-slate-800" id="leadsTableBody">
                         @foreach($leads as $index => $lead)
-                            <tr class="hover:bg-slate-50 transition-colors {{ $lead->project_id ? 'bg-emerald-50/40' : '' }}" data-lead-id="{{ $lead->id }}">
+                            @php
+                                $currentScopes = is_array($lead->work_scope) ? $lead->work_scope : [];
+                                $cleanPhone = preg_replace('/[^0-9]/', '', $lead->contact_number);
+                            @endphp
+                            <tr class="sheet-row hover:bg-slate-50/80 transition-colors {{ $lead->project_id ? 'bg-emerald-50/40' : '' }}" 
+                                data-lead-id="{{ $lead->id }}" 
+                                data-scopes='@json($currentScopes)'>
                                 <!-- Index -->
-                                <td class="py-1 px-2 border-r border-slate-200 text-center font-mono text-slate-400 font-semibold text-[11px]">
+                                <td class="py-1 px-2 border-r border-slate-200 text-center font-mono text-slate-400 font-semibold text-[11px] select-none bg-slate-50/60 row-index-cell">
                                     {{ $index + 1 }}
                                 </td>
 
                                 <!-- Name (Editable) -->
                                 <td class="p-0 border-r border-slate-200 font-bold">
-                                    <input type="text" value="{{ $lead->client_name }}" 
-                                           onchange="updateLeadField({{ $lead->id }}, 'client_name', this.value)"
+                                    <input type="text" value="{{ $lead->client_name }}" data-field="client_name"
+                                           oninput="handleCellInput(this)" onblur="handleCellBlur(this)"
                                            class="cell-input font-bold text-slate-900"/>
                                 </td>
 
                                 <!-- Niche (Editable) -->
                                 <td class="p-0 border-r border-slate-200">
-                                    <textarea rows="1" title="{{ $lead->niche }}" onchange="updateLeadField({{ $lead->id }}, 'niche', this.value)"
+                                    <textarea rows="1" title="{{ $lead->niche }}" data-field="niche"
+                                              oninput="handleCellInput(this)" onblur="handleCellBlur(this)"
                                               class="cell-input-expand text-slate-600">{{ $lead->niche }}</textarea>
                                 </td>
 
                                 <!-- Contact Number (Editable + WhatsApp Link) -->
                                 <td class="p-0 border-r border-slate-200">
-                                    <div class="flex items-center pr-1.5">
-                                        <input type="text" value="{{ $lead->contact_number }}" title="{{ $lead->contact_number }}"
-                                               onchange="updateLeadField({{ $lead->id }}, 'contact_number', this.value)"
+                                    <div class="flex items-center pr-1.5 contact-container">
+                                        <input type="text" value="{{ $lead->contact_number }}" title="{{ $lead->contact_number }}" data-field="contact_number"
+                                               oninput="handleCellInput(this)" onblur="handleCellBlur(this)"
                                                class="cell-input font-mono"/>
-                                        @php $cleanPhone = preg_replace('/[^0-9]/', '', $lead->contact_number); @endphp
-                                        @if($cleanPhone)
-                                            <a href="https://wa.me/{{ $cleanPhone }}" target="_blank" title="Chat on WhatsApp" class="text-emerald-600 hover:text-emerald-700 p-0.5 shrink-0">
-                                                <span class="material-symbols-outlined text-[15px]">chat</span>
-                                            </a>
-                                        @endif
+                                        <a href="{{ $cleanPhone ? 'https://wa.me/'.$cleanPhone : '#' }}" target="_blank" title="Chat on WhatsApp" 
+                                           class="whatsapp-btn {{ $cleanPhone ? '' : 'hidden' }} text-emerald-600 hover:text-emerald-700 p-0.5 shrink-0">
+                                            <span class="material-symbols-outlined text-[15px]">chat</span>
+                                        </a>
                                     </div>
                                 </td>
 
-                                <!-- Work Scope Column (Shows ONLY selected badges + Google Sheets Multi-select Dropdown Popover) -->
-                                <td class="py-1 px-2 border-r border-slate-200 relative">
-                                    @php
-                                        $currentScopes = is_array($lead->work_scope) ? $lead->work_scope : [];
-                                    @endphp
-                                    <div class="flex flex-wrap gap-1 items-center min-h-[26px] cursor-pointer rounded px-1 hover:bg-slate-100/80 transition-colors" 
-                                         onclick="openScopePopover(event, {{ $lead->id }})">
-                                        @forelse($currentScopes as $scope)
-                                            @php
-                                                $pillStyle = match($scope) {
-                                                    'WordPress' => 'bg-sky-600 text-white font-bold',
-                                                    'MERN' => 'bg-rose-500 text-white font-bold',
-                                                    'Laravel' => 'bg-amber-600 text-white font-bold',
-                                                    'Mobile app' => 'bg-emerald-600 text-white font-bold',
-                                                    'Digital Marketing' => 'bg-purple-600 text-white font-bold',
-                                                    default => 'bg-slate-700 text-white font-bold'
-                                                };
-                                            @endphp
-                                            <span class="px-2 py-0.5 text-[10px] rounded-full shadow-2xs {{ $pillStyle }}">
-                                                {{ $scope }}
-                                            </span>
-                                        @empty
-                                            <span class="text-slate-400 italic text-[11px] flex items-center">
-                                                + Assign Scope
-                                            </span>
-                                        @endforelse
-                                    </div>
-
-                                    <!-- Google Sheets Multi-Select Dropdown Popover Overlay -->
-                                    <div id="scope-popover-{{ $lead->id }}" class="scope-popover fixed z-50 hidden bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-56 space-y-2 text-left">
-                                        <div class="flex items-center space-x-1.5 pb-2 border-b border-slate-100">
-                                            <span class="material-symbols-outlined text-slate-400 text-[16px]">search</span>
-                                            <input type="text" onkeyup="filterPopoverItems(this)" placeholder="Search Tech Stack..." class="w-full text-xs border-0 outline-none p-0 focus:ring-0 text-slate-700"/>
-                                        </div>
-
-                                        <div class="space-y-1.5 max-h-48 overflow-y-auto pt-1 popover-items-list">
-                                            @foreach($allowedTechStacks as $techName => $styles)
-                                                @php $isAssigned = in_array($techName, $currentScopes); @endphp
-                                                <button type="button" 
-                                                        onclick="toggleScopeItem({{ $lead->id }}, '{{ $techName }}', this)"
-                                                        data-tech="{{ $techName }}"
-                                                        data-assigned="{{ $isAssigned ? 'true' : 'false' }}"
-                                                        class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all text-left cursor-pointer hover:bg-slate-50">
-                                                    <span class="px-2 py-0.5 text-[10px] rounded-full {{ $isAssigned ? $styles['bg'] : $styles['pill'] }}">
-                                                        {{ $techName }}
-                                                    </span>
-                                                    <span class="material-symbols-outlined text-[16px] {{ $isAssigned ? 'text-emerald-600' : 'text-transparent' }} check-icon">
-                                                        check_circle
-                                                    </span>
-                                                </button>
-                                            @endforeach
+                                <!-- Work Scope Column -->
+                                <td class="py-1 px-2 border-r border-slate-200 relative scope-td">
+                                    <div class="flex flex-wrap gap-1 items-center min-h-[26px] cursor-pointer rounded px-1 hover:bg-slate-100/80 transition-colors scope-trigger" 
+                                         onclick="openGlobalScopePopover(event, this)">
+                                        <div class="scope-badges flex flex-wrap gap-1 items-center">
+                                            @forelse($currentScopes as $scope)
+                                                @php
+                                                    $pillStyle = match($scope) {
+                                                        'WordPress' => 'bg-sky-600 text-white font-bold',
+                                                        'MERN' => 'bg-rose-500 text-white font-bold',
+                                                        'Laravel' => 'bg-amber-600 text-white font-bold',
+                                                        'Mobile app' => 'bg-emerald-600 text-white font-bold',
+                                                        'Digital Marketing' => 'bg-purple-600 text-white font-bold',
+                                                        default => 'bg-slate-700 text-white font-bold'
+                                                    };
+                                                @endphp
+                                                <span class="px-2 py-0.5 text-[10px] rounded-full shadow-2xs {{ $pillStyle }}">
+                                                    {{ $scope }}
+                                                </span>
+                                            @empty
+                                                <span class="text-slate-400 italic text-[11px] flex items-center">
+                                                    + Assign Scope
+                                                </span>
+                                            @endforelse
                                         </div>
                                     </div>
                                 </td>
 
-                                <!-- Incoming Date (Editable Date Picker) -->
+                                <!-- Incoming Date -->
                                 <td class="p-0 border-r border-slate-200">
-                                    <input type="date" value="{{ \Carbon\Carbon::parse($lead->lead_incoming_date)->format('Y-m-d') }}" 
-                                           onchange="updateLeadField({{ $lead->id }}, 'lead_incoming_date', this.value)"
+                                    <input type="date" value="{{ \Carbon\Carbon::parse($lead->lead_incoming_date)->format('Y-m-d') }}" data-field="lead_incoming_date"
+                                           onchange="handleCellBlur(this)"
                                            class="cell-input font-mono text-slate-600"/>
                                 </td>
 
-                                <!-- Quoted Amount (Editable) -->
+                                <!-- Quoted Amount -->
                                 <td class="p-0 border-r border-slate-200">
-                                    <input type="text" value="{{ $lead->quoted_amount }}" 
-                                           onchange="updateLeadField({{ $lead->id }}, 'quoted_amount', this.value)"
+                                    <input type="text" value="{{ $lead->quoted_amount }}" data-field="quoted_amount"
+                                           oninput="handleCellInput(this)" onblur="handleCellBlur(this)"
                                            class="cell-input font-mono font-bold text-slate-900"/>
                                 </td>
 
-                                <!-- Sold Amount (Editable) -->
+                                <!-- Sold Amount -->
                                 <td class="p-0 border-r border-slate-200">
-                                    <input type="text" value="{{ $lead->sold_amount }}" 
-                                           onchange="updateLeadField({{ $lead->id }}, 'sold_amount', this.value)"
+                                    <input type="text" value="{{ $lead->sold_amount }}" data-field="sold_amount"
+                                           oninput="handleCellInput(this)" onblur="handleCellBlur(this)"
                                            class="cell-input font-mono font-bold text-emerald-700"/>
                                 </td>
 
-                                <!-- Status (Editable Text Field) -->
+                                <!-- Status -->
                                 <td class="p-1 border-r border-slate-200">
-                                    <textarea rows="1" title="{{ $lead->status }}" onchange="updateLeadField({{ $lead->id }}, 'status', this.value)"
+                                    <textarea rows="1" title="{{ $lead->status }}" data-field="status" list="statusSuggestions"
+                                              oninput="handleCellInput(this)" onblur="handleCellBlur(this)"
                                               class="cell-input-status">{{ $lead->status }}</textarea>
                                 </td>
 
-                                <!-- Note / Activity (Editable) -->
+                                <!-- Note / Activity -->
                                 <td class="p-0 border-r border-slate-200">
-                                    <textarea rows="1" title="{{ $lead->note }}" onchange="updateLeadField({{ $lead->id }}, 'note', this.value)"
+                                    <textarea rows="1" title="{{ $lead->note }}" data-field="note"
+                                              oninput="handleCellInput(this)" onblur="handleCellBlur(this)"
                                               class="cell-input-expand text-slate-700">{{ $lead->note }}</textarea>
                                 </td>
 
                                 <!-- Actions -->
-                                <td class="py-1 px-2 text-center whitespace-nowrap">
+                                <td class="py-1 px-2 text-center whitespace-nowrap actions-td">
                                     <div class="flex items-center justify-center space-x-1">
-                                        <!-- View / Profile -->
                                         <a href="{{ route('leads.show', $lead->id) }}" class="p-1 text-slate-400 hover:text-secondary rounded hover:bg-slate-100" title="View Detail Timeline">
                                             <span class="material-symbols-outlined text-[16px]">visibility</span>
                                         </a>
-
-                                        <!-- Convert to Project Button -->
                                         @if(!$lead->project_id)
                                             <form action="{{ route('leads.convert', $lead->id) }}" method="POST" onsubmit="return confirm('Convert this lead into an active Project?');" class="inline">
                                                 @csrf
@@ -479,82 +460,117 @@
                                                 <span class="material-symbols-outlined text-[16px]">folder</span>
                                             </a>
                                         @endif
-
-                                        <!-- Delete -->
-                                        <form action="{{ route('leads.destroy', $lead->id) }}" method="POST" onsubmit="return confirm('Delete this lead row?');" class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50" title="Delete Row">
-                                                <span class="material-symbols-outlined text-[16px]">delete</span>
-                                            </button>
-                                        </form>
+                                        <button type="button" onclick="deleteLeadRow(this, {{ $lead->id }})" class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50" title="Delete Row">
+                                            <span class="material-symbols-outlined text-[16px]">delete</span>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
                         @endforeach
 
-                        <!-- Google Sheet Style Blank Input Row for Instant Entry -->
-                        <tr id="blankRow" class="bg-cyan-50/30 border-t-2 border-cyan-200">
-                            <td class="py-2 px-2 text-center font-bold text-cyan-700 text-xs">+</td>
-                            <td class="p-0 border-r border-slate-200">
-                                <input type="text" id="new_client_name" onchange="autoSaveNewLeadRow()" class="cell-input font-bold text-slate-900"/>
-                            </td>
-                            <td class="p-0 border-r border-slate-200">
-                                <textarea rows="1" id="new_niche" onchange="autoSaveNewLeadRow()" class="cell-input-expand"></textarea>
-                            </td>
-                            <td class="p-0 border-r border-slate-200">
-                                <input type="text" id="new_contact_number" onchange="autoSaveNewLeadRow()" class="cell-input font-mono"/>
-                            </td>
-                            <td class="py-1 px-2 border-r border-slate-200 relative">
-                                <div class="flex flex-wrap gap-1 items-center cursor-pointer min-h-[26px]" onclick="openNewScopePopover(event)">
-                                    <div id="new_scopes_display" class="flex flex-wrap gap-1 items-center">
-                                        <span class="text-slate-400 italic text-[11px]">+ Assign Scope</span>
-                                    </div>
-                                </div>
+                        <!-- Google Sheets Empty Grid Rows Filling the Screen -->
+                        @php
+                            $existingCount = $leads->count();
+                            $targetTotalRows = max(20, $existingCount + 10);
+                            $emptyRowsCount = $targetTotalRows - $existingCount;
+                        @endphp
+                        @for($i = 1; $i <= $emptyRowsCount; $i++)
+                            @php $rowIndex = $existingCount + $i; @endphp
+                            <tr class="sheet-row hover:bg-slate-50/50 transition-colors" data-row-index="{{ $rowIndex }}" data-scopes="[]">
+                                <!-- Index -->
+                                <td class="py-1 px-2 border-r border-slate-200 text-center font-mono text-slate-400 font-semibold text-[11px] select-none bg-slate-50/60 row-index-cell">
+                                    {{ $rowIndex }}
+                                </td>
 
-                                <div id="new-scope-popover" class="scope-popover fixed z-50 hidden bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-56 space-y-2 text-left">
-                                    <div class="flex items-center space-x-1.5 pb-2 border-b border-slate-100">
-                                        <span class="material-symbols-outlined text-slate-400 text-[16px]">search</span>
-                                        <input type="text" onkeyup="filterPopoverItems(this)" placeholder="Search Tech Stack..." class="w-full text-xs border-0 outline-none p-0 focus:ring-0 text-slate-700"/>
+                                <!-- Name -->
+                                <td class="p-0 border-r border-slate-200 font-bold">
+                                    <input type="text" data-field="client_name" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-bold text-slate-900"/>
+                                </td>
+
+                                <!-- Niche -->
+                                <td class="p-0 border-r border-slate-200">
+                                    <textarea rows="1" data-field="niche" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-expand text-slate-600"></textarea>
+                                </td>
+
+                                <!-- Contact Number -->
+                                <td class="p-0 border-r border-slate-200">
+                                    <div class="flex items-center pr-1.5 contact-container">
+                                        <input type="text" data-field="contact_number" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-mono"/>
+                                        <a href="#" target="_blank" title="Chat on WhatsApp" class="whatsapp-btn hidden text-emerald-600 hover:text-emerald-700 p-0.5 shrink-0">
+                                            <span class="material-symbols-outlined text-[15px]">chat</span>
+                                        </a>
                                     </div>
-                                    <div class="space-y-1.5 max-h-48 overflow-y-auto pt-1">
-                                        @foreach($allowedTechStacks as $techName => $styles)
-                                            <button type="button" 
-                                                    onclick="toggleNewScopeItem('{{ $techName }}', this)"
-                                                    data-tech="{{ $techName }}"
-                                                    data-assigned="false"
-                                                    class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all text-left cursor-pointer hover:bg-slate-50">
-                                                <span class="px-2 py-0.5 text-[10px] rounded-full {{ $styles['pill'] }}">
-                                                    {{ $techName }}
-                                                </span>
-                                                <span class="material-symbols-outlined text-[16px] text-transparent check-icon">
-                                                    check_circle
-                                                </span>
-                                            </button>
-                                        @endforeach
+                                </td>
+
+                                <!-- Work Scope -->
+                                <td class="py-1 px-2 border-r border-slate-200 relative scope-td">
+                                    <div class="flex flex-wrap gap-1 items-center min-h-[26px] cursor-pointer rounded px-1 hover:bg-slate-100/80 transition-colors scope-trigger" onclick="openGlobalScopePopover(event, this)">
+                                        <div class="scope-badges flex flex-wrap gap-1 items-center">
+                                            <span class="text-slate-400 italic text-[11px] flex items-center">+ Assign Scope</span>
+                                        </div>
                                     </div>
-                                </div>
-                            </td>
-                            <td class="p-0 border-r border-slate-200">
-                                <input type="date" id="new_incoming_date" value="{{ date('Y-m-d') }}" onchange="autoSaveNewLeadRow()" class="cell-input font-mono text-slate-600"/>
-                            </td>
-                            <td class="p-0 border-r border-slate-200">
-                                <input type="text" id="new_quoted_amount" onchange="autoSaveNewLeadRow()" class="cell-input font-mono font-bold"/>
-                            </td>
-                            <td class="p-0 border-r border-slate-200">
-                                <input type="text" id="new_sold_amount" onchange="autoSaveNewLeadRow()" class="cell-input font-mono font-bold"/>
-                            </td>
-                            <td class="p-1 border-r border-slate-200">
-                                <textarea rows="1" id="new_status" onchange="autoSaveNewLeadRow()" class="cell-input-status"></textarea>
-                            </td>
-                            <td class="p-0 border-r border-slate-200">
-                                <textarea rows="1" id="new_note" onchange="autoSaveNewLeadRow()" class="cell-input-expand text-slate-700"></textarea>
-                            </td>
-                            <td class="py-1 px-2 text-center text-slate-300 text-xs">
-                                •
-                            </td>
-                        </tr>
+                                </td>
+
+                                <!-- Incoming Date -->
+                                <td class="p-0 border-r border-slate-200">
+                                    <input type="date" data-field="lead_incoming_date" value="{{ date('Y-m-d') }}" onchange="handleNewRowBlur(this)" class="cell-input font-mono text-slate-600"/>
+                                </td>
+
+                                <!-- Quoted Amount -->
+                                <td class="p-0 border-r border-slate-200">
+                                    <input type="text" data-field="quoted_amount" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-mono font-bold text-slate-900"/>
+                                </td>
+
+                                <!-- Sold Amount -->
+                                <td class="p-0 border-r border-slate-200">
+                                    <input type="text" data-field="sold_amount" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-mono font-bold text-emerald-700"/>
+                                </td>
+
+                                <!-- Status -->
+                                <td class="p-1 border-r border-slate-200">
+                                    <textarea rows="1" data-field="status" list="statusSuggestions" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-status"></textarea>
+                                </td>
+
+                                <!-- Note -->
+                                <td class="p-0 border-r border-slate-200">
+                                    <textarea rows="1" data-field="note" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-expand text-slate-700"></textarea>
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="py-1 px-2 text-center whitespace-nowrap actions-td">
+                                    <span class="text-slate-300 text-xs select-none">•</span>
+                                </td>
+                            </tr>
+                        @endfor
                     </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Global Google Sheets Multi-Select Dropdown Popover Overlay -->
+        <div id="global-scope-popover" class="scope-popover fixed z-50 hidden bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-56 space-y-2 text-left">
+            <div class="flex items-center space-x-1.5 pb-2 border-b border-slate-100">
+                <span class="material-symbols-outlined text-slate-400 text-[16px]">search</span>
+                <input type="text" onkeyup="filterPopoverItems(this)" placeholder="Search Tech Stack..." class="w-full text-xs border-0 outline-none p-0 focus:ring-0 text-slate-700"/>
+            </div>
+
+            <div class="space-y-1.5 max-h-48 overflow-y-auto pt-1 popover-items-list">
+                @foreach($allowedTechStacks as $techName => $styles)
+                    <button type="button" 
+                            onclick="toggleGlobalScopeItem('{{ $techName }}', this)"
+                            data-tech="{{ $techName }}"
+                            data-assigned="false"
+                            class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all text-left cursor-pointer hover:bg-slate-50">
+                        <span class="px-2 py-0.5 text-[10px] rounded-full {{ $styles['pill'] }}">
+                            {{ $techName }}
+                        </span>
+                        <span class="material-symbols-outlined text-[16px] text-transparent check-icon">
+                            check_circle
+                        </span>
+                    </button>
+                @endforeach
+            </div>
+        </div>ody>
                 </table>
             </div>
         </div>
@@ -624,8 +640,33 @@ const TECH_PILL_STYLES = {
     'Digital Marketing': 'bg-purple-600 text-white font-bold'
 };
 
+// Google Sheets Style Real-time Cloud Sync Status
+function setCloudSyncStatus(status) {
+    const icon = document.getElementById('cloudSyncIcon');
+    const text = document.getElementById('cloudSyncText');
+    if (!icon || !text) return;
+
+    if (status === 'saving') {
+        icon.innerText = 'sync';
+        icon.className = 'material-symbols-outlined text-[17px] text-amber-500 animate-spin';
+        text.innerText = 'Saving...';
+        text.className = 'text-[11px] font-medium text-amber-600';
+    } else if (status === 'saved') {
+        icon.innerText = 'cloud_done';
+        icon.className = 'material-symbols-outlined text-[17px] text-emerald-600';
+        text.innerText = 'All changes saved';
+        text.className = 'text-[11px] font-medium text-slate-500';
+    } else if (status === 'error') {
+        icon.innerText = 'error';
+        icon.className = 'material-symbols-outlined text-[17px] text-rose-500';
+        text.innerText = 'Save error';
+        text.className = 'text-[11px] font-medium text-rose-600';
+    }
+}
+
 function showToast(message = "Saved") {
     const toast = document.getElementById('toast');
+    if (!toast) return;
     document.getElementById('toast-message').innerText = message;
     toast.classList.remove('translate-y-[-100%]', 'opacity-0');
     toast.classList.add('translate-y-0', 'opacity-100');
@@ -635,8 +676,59 @@ function showToast(message = "Saved") {
     }, 1500);
 }
 
-// Inline AJAX field updater
-function updateLeadField(leadId, fieldName, fieldValue) {
+// Update WhatsApp icon for a given row
+function updateRowWhatsApp(row, phone) {
+    const cleanPhone = (phone || '').replace(/[^0-9]/g, '');
+    const waBtn = row.querySelector('.whatsapp-btn');
+    if (!waBtn) return;
+    if (cleanPhone.length >= 7) {
+        waBtn.href = `https://wa.me/${cleanPhone}`;
+        waBtn.classList.remove('hidden');
+    } else {
+        waBtn.classList.add('hidden');
+    }
+}
+
+// Real-time debounce auto-save for EXISTING cells
+const cellDebounceTimers = new Map();
+
+function handleCellInput(input) {
+    const row = input.closest('tr');
+    const leadId = row.getAttribute('data-lead-id');
+    if (!leadId) {
+        handleNewRowInput(input);
+        return;
+    }
+
+    setCloudSyncStatus('saving');
+    const key = `${leadId}_${input.dataset.field}`;
+    if (cellDebounceTimers.has(key)) {
+        clearTimeout(cellDebounceTimers.get(key));
+    }
+    const timer = setTimeout(() => {
+        saveExistingFieldNow(leadId, input.dataset.field, input.value, row);
+        cellDebounceTimers.delete(key);
+    }, 450);
+    cellDebounceTimers.set(key, timer);
+}
+
+function handleCellBlur(input) {
+    const row = input.closest('tr');
+    const leadId = row.getAttribute('data-lead-id');
+    if (!leadId) {
+        handleNewRowBlur(input);
+        return;
+    }
+
+    const key = `${leadId}_${input.dataset.field}`;
+    if (cellDebounceTimers.has(key)) {
+        clearTimeout(cellDebounceTimers.get(key));
+        cellDebounceTimers.delete(key);
+    }
+    saveExistingFieldNow(leadId, input.dataset.field, input.value, row);
+}
+
+function saveExistingFieldNow(leadId, fieldName, fieldValue, row) {
     const data = {};
     data[fieldName] = fieldValue;
 
@@ -650,215 +742,87 @@ function updateLeadField(leadId, fieldName, fieldValue) {
         body: JSON.stringify(data)
     })
     .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            showToast("Saved ✓");
+    .then(resData => {
+        if (resData.success) {
+            setCloudSyncStatus('saved');
+            if (fieldName === 'contact_number' && row) {
+                updateRowWhatsApp(row, fieldValue);
+            }
+        } else {
+            setCloudSyncStatus('error');
         }
     })
-    .catch(err => console.error("Update failed:", err));
-}
-
-// Dynamic positioning for Google Sheets Multi-Select Popover (Auto-flip up if bottom overflows)
-function positionScopePopover(popover, triggerEl) {
-    if (!popover || !triggerEl) return;
-
-    // Temporarily make visible to accurately measure height and width
-    popover.style.visibility = 'hidden';
-    popover.classList.remove('hidden');
-
-    const rect = triggerEl.getBoundingClientRect();
-    const popoverHeight = popover.offsetHeight || 240;
-    const popoverWidth = popover.offsetWidth || 224;
-
-    const viewportHeight = window.innerHeight;
-    const viewportWidth = window.innerWidth;
-
-    const spaceBelow = viewportHeight - rect.bottom;
-    const spaceAbove = rect.top;
-
-    let top;
-    // If not enough space below and more space above, open upwards
-    if (spaceBelow < (popoverHeight + 10) && spaceAbove > spaceBelow) {
-        top = rect.top - popoverHeight - 4;
-    } else {
-        top = rect.bottom + 4;
-    }
-
-    // Boundary constraints: ensure popup stays fully visible vertically
-    if (top < 8) {
-        top = 8;
-    } else if (top + popoverHeight > viewportHeight - 8) {
-        top = Math.max(8, viewportHeight - popoverHeight - 8);
-    }
-
-    // Boundary constraints: ensure popup stays fully visible horizontally
-    let left = rect.left;
-    if (left + popoverWidth > viewportWidth - 12) {
-        left = Math.max(12, viewportWidth - popoverWidth - 12);
-    }
-    if (left < 12) left = 12;
-
-    popover.style.top = `${top}px`;
-    popover.style.left = `${left}px`;
-    popover.style.visibility = 'visible';
-
-    // Auto focus and reset search field if present
-    const searchInput = popover.querySelector('input[type="text"]');
-    if (searchInput) {
-        searchInput.value = '';
-        popover.querySelectorAll('button[data-tech]').forEach(btn => btn.style.display = 'flex');
-        setTimeout(() => searchInput.focus(), 30);
-    }
-}
-
-function openScopePopover(event, leadId) {
-    event.stopPropagation();
-    closeAllPopovers();
-
-    const popover = document.getElementById(`scope-popover-${leadId}`);
-    if (!popover) return;
-
-    positionScopePopover(popover, event.currentTarget);
-}
-
-function openNewScopePopover(event) {
-    event.stopPropagation();
-    closeAllPopovers();
-
-    const popover = document.getElementById('new-scope-popover');
-    if (!popover) return;
-
-    positionScopePopover(popover, event.currentTarget);
-}
-
-function closeAllPopovers(event) {
-    if (event && event.target && event.target.closest && event.target.closest('.scope-popover')) return;
-    document.querySelectorAll('.scope-popover').forEach(p => {
-        p.classList.add('hidden');
-        p.style.visibility = '';
+    .catch(err => {
+        console.error("Save error:", err);
+        setCloudSyncStatus('error');
     });
 }
 
-// Close popovers if user scrolls workspace or resizes window
-window.addEventListener('scroll', function(e) {
-    if (e.target && e.target.closest && e.target.closest('.scope-popover')) return;
-    closeAllPopovers();
-}, true);
+// Real-time debounce auto-save for EMPTY (new) rows
+const newRowDebounceTimers = new Map();
 
-window.addEventListener('resize', closeAllPopovers);
+function handleNewRowInput(input) {
+    const row = input.closest('tr');
+    if (row.hasAttribute('data-lead-id')) {
+        handleCellInput(input);
+        return;
+    }
 
-// Filter popover items with search input
-function filterPopoverItems(input) {
-    const filter = input.value.toLowerCase();
-    const list = input.closest('.scope-popover').querySelectorAll('.popover-items-list button, #new-scope-popover button');
-    list.forEach(btn => {
-        const text = btn.getAttribute('data-tech').toLowerCase();
-        btn.style.display = text.includes(filter) ? 'flex' : 'none';
-    });
+    setCloudSyncStatus('saving');
+    if (newRowDebounceTimers.has(row)) {
+        clearTimeout(newRowDebounceTimers.get(row));
+    }
+    const timer = setTimeout(() => {
+        saveNewRowNow(row);
+        newRowDebounceTimers.delete(row);
+    }, 500);
+    newRowDebounceTimers.set(row, timer);
 }
 
-// Toggle multi-select Tech Stack item in popover
-function toggleScopeItem(leadId, techName, btn) {
-    const isAssigned = btn.getAttribute('data-assigned') === 'true';
-    const nextState = !isAssigned;
-    btn.setAttribute('data-assigned', nextState);
-
-    const checkIcon = btn.querySelector('.check-icon');
-    if (nextState) {
-        checkIcon.classList.remove('text-transparent');
-        checkIcon.classList.add('text-emerald-600');
-    } else {
-        checkIcon.classList.remove('text-emerald-600');
-        checkIcon.classList.add('text-transparent');
+function handleNewRowBlur(input) {
+    const row = input.closest('tr');
+    if (row.hasAttribute('data-lead-id')) {
+        handleCellBlur(input);
+        return;
     }
 
-    // Collect all selected tech stacks for this lead
-    const popover = document.getElementById(`scope-popover-${leadId}`);
-    const selectedTechs = [];
-    popover.querySelectorAll('button[data-assigned="true"]').forEach(b => {
-        selectedTechs.push(b.getAttribute('data-tech'));
-    });
-
-    // Update table cell display to show ONLY selected badges
-    const cellContainer = popover.parentElement.querySelector('div');
-    if (selectedTechs.length > 0) {
-        cellContainer.innerHTML = selectedTechs.map(t => `<span class="px-2 py-0.5 text-[10px] rounded-full shadow-2xs ${TECH_PILL_STYLES[t] || 'bg-slate-700 text-white font-bold'}">${t}</span>`).join('');
-    } else {
-        cellContainer.innerHTML = `<span class="text-slate-400 italic text-[11px] flex items-center">+ Assign Scope</span>`;
+    if (newRowDebounceTimers.has(row)) {
+        clearTimeout(newRowDebounceTimers.get(row));
+        newRowDebounceTimers.delete(row);
     }
-
-    // Save updated tech stack array via AJAX
-    fetch(`/leads/${leadId}/quick-update`, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': CSRF_TOKEN,
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({ work_scope: selectedTechs })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            showToast("Work Scope updated ✓");
-        }
-    });
+    saveNewRowNow(row);
 }
 
-// Toggle multi-select Tech Stack for new blank row
-function toggleNewScopeItem(techName, btn) {
-    const isAssigned = btn.getAttribute('data-assigned') === 'true';
-    const nextState = !isAssigned;
-    btn.setAttribute('data-assigned', nextState);
+function saveNewRowNow(row) {
+    if (row.dataset.isSaving === 'true' || row.hasAttribute('data-lead-id')) return;
 
-    const checkIcon = btn.querySelector('.check-icon');
-    if (nextState) {
-        checkIcon.classList.remove('text-transparent');
-        checkIcon.classList.add('text-emerald-600');
-        if (!newRowScopes.includes(techName)) newRowScopes.push(techName);
-    } else {
-        checkIcon.classList.remove('text-emerald-600');
-        checkIcon.classList.add('text-transparent');
-        newRowScopes = newRowScopes.filter(t => t !== techName);
-    }
+    const clientName = (row.querySelector('[data-field="client_name"]')?.value || '').trim();
+    const niche = (row.querySelector('[data-field="niche"]')?.value || '').trim();
+    const contact = (row.querySelector('[data-field="contact_number"]')?.value || '').trim();
+    const date = row.querySelector('[data-field="lead_incoming_date"]')?.value || '';
+    const quoted = (row.querySelector('[data-field="quoted_amount"]')?.value || '').trim();
+    const sold = (row.querySelector('[data-field="sold_amount"]')?.value || '').trim();
+    const status = (row.querySelector('[data-field="status"]')?.value || '').trim();
+    const note = (row.querySelector('[data-field="note"]')?.value || '').trim();
+    let scopes = [];
+    try {
+        scopes = JSON.parse(row.dataset.scopes || '[]');
+    } catch(e) { scopes = []; }
 
-    const display = document.getElementById('new_scopes_display');
-    if (newRowScopes.length > 0) {
-        display.innerHTML = newRowScopes.map(t => `<span class="px-2 py-0.5 text-[10px] rounded-full shadow-2xs ${TECH_PILL_STYLES[t] || 'bg-slate-700 text-white font-bold'}">${t}</span>`).join('');
-    } else {
-        display.innerHTML = `<span class="text-slate-400 italic text-[11px]">+ Assign Scope</span>`;
-    }
-
-    autoSaveNewLeadRow();
-}
-
-let isSavingNewRow = false;
-
-function autoSaveNewLeadRow() {
-    if (isSavingNewRow) return;
-
-    const clientName = document.getElementById('new_client_name').value.trim();
-    const niche = document.getElementById('new_niche').value.trim();
-    const contact = document.getElementById('new_contact_number').value.trim();
-    const quoted = document.getElementById('new_quoted_amount').value.trim();
-    const sold = document.getElementById('new_sold_amount').value.trim();
-    const status = document.getElementById('new_status').value.trim();
-    const note = document.getElementById('new_note').value.trim();
-    const scopes = newRowScopes;
-
-    // Check if at least one field has been typed or selected
+    // If row is completely empty, don't create lead
     if (!clientName && !niche && !contact && !quoted && !sold && !status && !note && scopes.length === 0) {
         return;
     }
 
-    isSavingNewRow = true;
+    row.dataset.isSaving = 'true';
+    setCloudSyncStatus('saving');
 
     const payload = {
         client_name: clientName || 'New Client',
         niche: niche,
         contact_number: contact,
         work_scope: scopes,
-        lead_incoming_date: document.getElementById('new_incoming_date').value,
+        lead_incoming_date: date || new Date().toISOString().split('T')[0],
         quoted_amount: quoted,
         sold_amount: sold,
         status: status || 'New Lead',
@@ -877,24 +841,359 @@ function autoSaveNewLeadRow() {
     })
     .then(res => res.json())
     .then(data => {
-        if (data.success) {
-            showToast("New row created ✓");
-            window.location.reload();
+        row.dataset.isSaving = 'false';
+        if (data.success && data.lead) {
+            const lead = data.lead;
+            row.setAttribute('data-lead-id', lead.id);
+
+            // Update WhatsApp icon
+            if (contact) {
+                updateRowWhatsApp(row, contact);
+            }
+
+            // Update Actions cell
+            const actionsTd = row.querySelector('.actions-td');
+            if (actionsTd) {
+                actionsTd.innerHTML = `
+                    <div class="flex items-center justify-center space-x-1">
+                        <a href="/leads/${lead.id}" class="p-1 text-slate-400 hover:text-secondary rounded hover:bg-slate-100" title="View Detail Timeline">
+                            <span class="material-symbols-outlined text-[16px]">visibility</span>
+                        </a>
+                        <form action="/leads/${lead.id}/convert" method="POST" onsubmit="return confirm('Convert this lead into an active Project?');" class="inline">
+                            <input type="hidden" name="_token" value="${CSRF_TOKEN}">
+                            <button type="submit" class="p-1 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded" title="Convert to Project">
+                                <span class="material-symbols-outlined text-[16px]">rocket_launch</span>
+                            </button>
+                        </form>
+                        <button type="button" onclick="deleteLeadRow(this, ${lead.id})" class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50" title="Delete Row">
+                            <span class="material-symbols-outlined text-[16px]">delete</span>
+                        </button>
+                    </div>
+                `;
+            }
+
+            // Increment Total count in header
+            const totalLeadsEl = document.getElementById('totalLeadsCount');
+            if (totalLeadsEl) {
+                totalLeadsEl.innerText = parseInt(totalLeadsEl.innerText || 0) + 1;
+            }
+
+            setCloudSyncStatus('saved');
+            showToast("Row saved ✓");
+
+            // Ensure we always have empty rows below
+            ensureEmptyRowsBuffer();
         } else {
-            isSavingNewRow = false;
+            setCloudSyncStatus('error');
         }
     })
     .catch(err => {
-        console.error("Error creating row:", err);
-        isSavingNewRow = false;
+        console.error("Save error:", err);
+        row.dataset.isSaving = 'false';
+        setCloudSyncStatus('error');
     });
 }
 
-function focusBlankRow() {
-    const input = document.getElementById('new_client_name');
-    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    input.focus();
+// Delete Lead Row with smooth AJAX removal
+function deleteLeadRow(btn, leadId) {
+    if (!confirm('Delete this lead row?')) return;
+    const row = btn.closest('tr');
+    setCloudSyncStatus('saving');
+
+    fetch(`/leads/${leadId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': CSRF_TOKEN,
+            'Accept': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            row.remove();
+            renumberRows();
+            ensureEmptyRowsBuffer();
+            setCloudSyncStatus('saved');
+            showToast("Row deleted");
+
+            const totalLeadsEl = document.getElementById('totalLeadsCount');
+            if (totalLeadsEl) {
+                const curr = parseInt(totalLeadsEl.innerText || 1);
+                totalLeadsEl.innerText = Math.max(0, curr - 1);
+            }
+        } else {
+            setCloudSyncStatus('error');
+        }
+    })
+    .catch(err => {
+        console.error("Delete error:", err);
+        setCloudSyncStatus('error');
+    });
 }
+
+// Renumber table row index numbers
+function renumberRows() {
+    const tbody = document.getElementById('leadsTableBody');
+    if (!tbody) return;
+    tbody.querySelectorAll('tr.sheet-row').forEach((row, idx) => {
+        const cell = row.querySelector('.row-index-cell');
+        if (cell) cell.innerText = idx + 1;
+    });
+}
+
+// Ensure at least 6 empty rows are always available at the bottom
+function ensureEmptyRowsBuffer() {
+    const tbody = document.getElementById('leadsTableBody');
+    if (!tbody) return;
+    const emptyRows = tbody.querySelectorAll('tr.sheet-row:not([data-lead-id])');
+    if (emptyRows.length < 6) {
+        const totalRows = tbody.querySelectorAll('tr.sheet-row').length;
+        for (let i = 1; i <= 6; i++) {
+            const nextIndex = totalRows + i;
+            const tr = document.createElement('tr');
+            tr.className = 'sheet-row hover:bg-slate-50/50 transition-colors';
+            tr.dataset.rowIndex = nextIndex;
+            tr.dataset.scopes = '[]';
+            tr.innerHTML = `
+                <td class="py-1 px-2 border-r border-slate-200 text-center font-mono text-slate-400 font-semibold text-[11px] select-none bg-slate-50/60 row-index-cell">
+                    ${nextIndex}
+                </td>
+                <td class="p-0 border-r border-slate-200 font-bold">
+                    <input type="text" data-field="client_name" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-bold text-slate-900"/>
+                </td>
+                <td class="p-0 border-r border-slate-200">
+                    <textarea rows="1" data-field="niche" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-expand text-slate-600"></textarea>
+                </td>
+                <td class="p-0 border-r border-slate-200">
+                    <div class="flex items-center pr-1.5 contact-container">
+                        <input type="text" data-field="contact_number" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-mono"/>
+                        <a href="#" target="_blank" title="Chat on WhatsApp" class="whatsapp-btn hidden text-emerald-600 hover:text-emerald-700 p-0.5 shrink-0">
+                            <span class="material-symbols-outlined text-[15px]">chat</span>
+                        </a>
+                    </div>
+                </td>
+                <td class="py-1 px-2 border-r border-slate-200 relative scope-td">
+                    <div class="flex flex-wrap gap-1 items-center min-h-[26px] cursor-pointer rounded px-1 hover:bg-slate-100/80 transition-colors scope-trigger" onclick="openGlobalScopePopover(event, this)">
+                        <div class="scope-badges flex flex-wrap gap-1 items-center">
+                            <span class="text-slate-400 italic text-[11px] flex items-center">+ Assign Scope</span>
+                        </div>
+                    </div>
+                </td>
+                <td class="p-0 border-r border-slate-200">
+                    <input type="date" data-field="lead_incoming_date" value="${new Date().toISOString().split('T')[0]}" onchange="handleNewRowBlur(this)" class="cell-input font-mono text-slate-600"/>
+                </td>
+                <td class="p-0 border-r border-slate-200">
+                    <input type="text" data-field="quoted_amount" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-mono font-bold text-slate-900"/>
+                </td>
+                <td class="p-0 border-r border-slate-200">
+                    <input type="text" data-field="sold_amount" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-mono font-bold text-emerald-700"/>
+                </td>
+                <td class="p-1 border-r border-slate-200">
+                    <textarea rows="1" data-field="status" list="statusSuggestions" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-status"></textarea>
+                </td>
+                <td class="p-0 border-r border-slate-200">
+                    <textarea rows="1" data-field="note" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-expand text-slate-700"></textarea>
+                </td>
+                <td class="py-1 px-2 text-center whitespace-nowrap actions-td">
+                    <span class="text-slate-300 text-xs select-none">•</span>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+    }
+}
+
+// Global Dynamic Positioning for Scope Popover
+function positionScopePopover(popover, triggerEl) {
+    if (!popover || !triggerEl) return;
+
+    popover.style.visibility = 'hidden';
+    popover.classList.remove('hidden');
+
+    const rect = triggerEl.getBoundingClientRect();
+    const popoverHeight = popover.offsetHeight || 240;
+    const popoverWidth = popover.offsetWidth || 224;
+
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
+
+    let top;
+    if (spaceBelow < (popoverHeight + 10) && spaceAbove > spaceBelow) {
+        top = rect.top - popoverHeight - 4;
+    } else {
+        top = rect.bottom + 4;
+    }
+
+    if (top < 8) top = 8;
+    else if (top + popoverHeight > viewportHeight - 8) {
+        top = Math.max(8, viewportHeight - popoverHeight - 8);
+    }
+
+    let left = rect.left;
+    if (left + popoverWidth > viewportWidth - 12) {
+        left = Math.max(12, viewportWidth - popoverWidth - 12);
+    }
+    if (left < 12) left = 12;
+
+    popover.style.top = `${top}px`;
+    popover.style.left = `${left}px`;
+    popover.style.visibility = 'visible';
+
+    const searchInput = popover.querySelector('input[type="text"]');
+    if (searchInput) {
+        searchInput.value = '';
+        popover.querySelectorAll('button[data-tech]').forEach(btn => btn.style.display = 'flex');
+        setTimeout(() => searchInput.focus(), 30);
+    }
+}
+
+let activeScopeRow = null;
+let activeScopeTrigger = null;
+
+function openGlobalScopePopover(event, trigger) {
+    event.stopPropagation();
+    closeAllPopovers();
+
+    activeScopeTrigger = trigger;
+    activeScopeRow = trigger.closest('tr');
+
+    const popover = document.getElementById('global-scope-popover');
+    if (!popover) return;
+
+    let currentScopes = [];
+    if (activeScopeRow.dataset.scopes) {
+        try {
+            currentScopes = JSON.parse(activeScopeRow.dataset.scopes);
+        } catch(e) { currentScopes = []; }
+    } else {
+        activeScopeRow.querySelectorAll('.scope-badges span').forEach(b => {
+            const text = b.innerText.trim();
+            if (text && text !== '+ Assign Scope') currentScopes.push(text);
+        });
+        activeScopeRow.dataset.scopes = JSON.stringify(currentScopes);
+    }
+
+    popover.querySelectorAll('button[data-tech]').forEach(btn => {
+        const tech = btn.getAttribute('data-tech');
+        const isAssigned = currentScopes.includes(tech);
+        btn.setAttribute('data-assigned', isAssigned ? 'true' : 'false');
+        const checkIcon = btn.querySelector('.check-icon');
+        if (checkIcon) {
+            checkIcon.className = `material-symbols-outlined text-[16px] ${isAssigned ? 'text-emerald-600' : 'text-transparent'} check-icon`;
+        }
+    });
+
+    positionScopePopover(popover, trigger);
+}
+
+function toggleGlobalScopeItem(techName, btn) {
+    if (!activeScopeRow || !activeScopeTrigger) return;
+
+    const isAssigned = btn.getAttribute('data-assigned') === 'true';
+    const nextState = !isAssigned;
+    btn.setAttribute('data-assigned', nextState ? 'true' : 'false');
+
+    const checkIcon = btn.querySelector('.check-icon');
+    if (checkIcon) {
+        checkIcon.className = `material-symbols-outlined text-[16px] ${nextState ? 'text-emerald-600' : 'text-transparent'} check-icon`;
+    }
+
+    let scopes = [];
+    try {
+        scopes = JSON.parse(activeScopeRow.dataset.scopes || '[]');
+    } catch(e) { scopes = []; }
+
+    if (nextState) {
+        if (!scopes.includes(techName)) scopes.push(techName);
+    } else {
+        scopes = scopes.filter(t => t !== techName);
+    }
+
+    activeScopeRow.dataset.scopes = JSON.stringify(scopes);
+
+    const badgesContainer = activeScopeTrigger.querySelector('.scope-badges');
+    if (badgesContainer) {
+        if (scopes.length > 0) {
+            badgesContainer.innerHTML = scopes.map(t => `<span class="px-2 py-0.5 text-[10px] rounded-full shadow-2xs ${TECH_PILL_STYLES[t] || 'bg-slate-700 text-white font-bold'}">${t}</span>`).join('');
+        } else {
+            badgesContainer.innerHTML = `<span class="text-slate-400 italic text-[11px] flex items-center">+ Assign Scope</span>`;
+        }
+    }
+
+    if (activeScopeRow.hasAttribute('data-lead-id')) {
+        const leadId = activeScopeRow.getAttribute('data-lead-id');
+        setCloudSyncStatus('saving');
+        fetch(`/leads/${leadId}/quick-update`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF_TOKEN,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ work_scope: scopes })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                setCloudSyncStatus('saved');
+                showToast("Work Scope updated ✓");
+            }
+        });
+    } else {
+        saveNewRowNow(activeScopeRow);
+    }
+}
+
+function filterPopoverItems(input) {
+    const filter = input.value.toLowerCase();
+    const list = input.closest('.scope-popover').querySelectorAll('.popover-items-list button');
+    list.forEach(btn => {
+        const text = btn.getAttribute('data-tech').toLowerCase();
+        btn.style.display = text.includes(filter) ? 'flex' : 'none';
+    });
+}
+
+function closeAllPopovers(event) {
+    if (event && event.target && event.target.closest && event.target.closest('.scope-popover')) return;
+    document.querySelectorAll('.scope-popover').forEach(p => {
+        p.classList.add('hidden');
+        p.style.visibility = '';
+    });
+}
+
+window.addEventListener('scroll', function(e) {
+    if (e.target && e.target.closest && e.target.closest('.scope-popover')) return;
+    closeAllPopovers();
+}, true);
+
+window.addEventListener('resize', closeAllPopovers);
+
+// Google Sheets Enter-Key Navigation (Moves down to next row in the same column)
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        const target = e.target;
+        if (target && (target.classList.contains('cell-input') || target.classList.contains('cell-input-expand') || target.classList.contains('cell-input-status'))) {
+            e.preventDefault();
+            target.blur();
+            const currentRow = target.closest('tr');
+            if (currentRow) {
+                const nextRow = currentRow.nextElementSibling;
+                if (nextRow) {
+                    const field = target.dataset.field;
+                    const nextInput = nextRow.querySelector(`[data-field="${field}"]`);
+                    if (nextInput) {
+                        nextInput.focus();
+                        if (nextInput.select) nextInput.select();
+                    }
+                }
+            }
+        }
+    }
+});
 
 function toggleMobileSidebar() {
     document.getElementById('sidebar').classList.toggle('-translate-x-full');

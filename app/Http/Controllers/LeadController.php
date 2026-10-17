@@ -323,10 +323,14 @@ class LeadController extends Controller
             ->with('success', "Successfully imported {$importedCount} leads!");
     }
 
-    public function destroy(Lead $lead)
+    public function destroy(Request $request, Lead $lead)
     {
         $campaign = $lead->campaign_month;
         $lead->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
 
         return redirect()->route('leads.index', ['campaign' => $campaign])
             ->with('success', 'Lead deleted successfully!');
