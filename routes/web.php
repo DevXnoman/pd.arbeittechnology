@@ -33,6 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/leads/create', [LeadController::class, 'create'])->name('leads.create');
     Route::post('/leads', [LeadController::class, 'store'])->name('leads.store');
     Route::post('/leads/import', [LeadController::class, 'import'])->name('leads.import');
+    Route::delete('/leads/campaigns/delete', [LeadController::class, 'destroyCampaign'])->name('leads.campaigns.destroy');
     Route::get('/leads/{lead}', [LeadController::class, 'show'])->name('leads.show');
     Route::get('/leads/{lead}/edit', [LeadController::class, 'edit'])->name('leads.edit');
     Route::put('/leads/{lead}', [LeadController::class, 'update'])->name('leads.update');

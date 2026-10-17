@@ -294,14 +294,22 @@
                 </a>
 
                 @foreach($campaigns as $campaign)
-                    <a href="{{ route('leads.index', array_merge(request()->except('page'), ['campaign' => $campaign])) }}"
-                       class="px-3.5 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap flex items-center space-x-1.5 {{ $selectedCampaign === $campaign ? 'bg-secondary text-white shadow-sm' : 'bg-slate-50 text-slate-700 hover:bg-slate-200 border border-slate-200' }}">
-                        <span class="material-symbols-outlined text-[15px]">campaign</span>
-                        <span>{{ $campaign }}</span>
-                        @if($loop->first)
-                            <span class="px-1.5 py-0.2 bg-emerald-400 text-slate-900 text-[9px] font-black rounded uppercase tracking-wider">Latest</span>
-                        @endif
-                    </a>
+                    <div class="inline-flex items-center rounded-md text-xs font-bold transition-all whitespace-nowrap {{ $selectedCampaign === $campaign ? 'bg-secondary text-white shadow-sm' : 'bg-slate-50 text-slate-700 hover:bg-slate-200 border border-slate-200' }}">
+                        <a href="{{ route('leads.index', array_merge(request()->except('page'), ['campaign' => $campaign])) }}"
+                           class="px-3 py-1.5 flex items-center space-x-1.5 text-inherit no-underline">
+                            <span class="material-symbols-outlined text-[15px]">campaign</span>
+                            <span>{{ $campaign }}</span>
+                            @if($loop->first)
+                                <span class="px-1.5 py-0.2 bg-emerald-400 text-slate-900 text-[9px] font-black rounded uppercase tracking-wider">Latest</span>
+                            @endif
+                        </a>
+                        <button type="button" 
+                                onclick="deleteCampaignTab(event, '{{ addslashes($campaign) }}')" 
+                                class="pr-2 pl-0.5 py-1 text-inherit opacity-60 hover:opacity-100 hover:text-rose-300 transition-opacity cursor-pointer" 
+                                title="Delete '{{ $campaign }}' tab and all its leads">
+                            <span class="material-symbols-outlined text-[14px]">close</span>
+                        </button>
+                    </div>
                 @endforeach
 
                 <!-- + Add Tab Button (Google Sheets Style) -->
@@ -543,6 +551,23 @@
                         @endfor
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Bottom Action Bar: Google Sheets Style Add Rows -->
+            <div class="px-4 py-3 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div class="flex items-center space-x-2">
+                    <button type="button" onclick="appendRows(20)" class="inline-flex items-center px-3.5 py-1.5 bg-white hover:bg-slate-100 text-slate-800 font-bold border border-slate-300 rounded-md shadow-2xs hover:border-slate-400 active:scale-95 transition-all cursor-pointer">
+                        <span class="material-symbols-outlined text-[17px] text-emerald-600 mr-1 font-bold">add_circle</span>
+                        <span>+ Add 20 Rows</span>
+                    </button>
+                    <button type="button" onclick="appendRows(50)" class="inline-flex items-center px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-600 font-semibold border border-slate-200 rounded-md text-[11px] hover:border-slate-300 transition-all cursor-pointer">
+                        <span>+ 50 Rows</span>
+                    </button>
+                    <span class="text-slate-400 text-[11px] ml-2 hidden sm:inline">Auto-saves to database instantly when you type</span>
+                </div>
+                <div class="text-slate-500 text-[11px] font-medium">
+                    Total Rows: <span id="currentVisibleRows" class="font-bold text-slate-700 font-mono">0</span>
+                </div>
             </div>
         </div>
 
@@ -969,6 +994,7 @@ function deleteLeadRow(btn, leadId) {
         if (data.success) {
             row.remove();
             renumberRows();
+            updateVisibleRowCount();
             ensureEmptyRowsBuffer();
             setCloudSyncStatus('saved');
             showToast("Row deleted");
@@ -998,65 +1024,102 @@ function renumberRows() {
     });
 }
 
+// Create empty row element
+function createEmptyRowElement(nextIndex) {
+    const tr = document.createElement('tr');
+    tr.className = 'sheet-row hover:bg-slate-50/50 transition-colors';
+    tr.dataset.rowIndex = nextIndex;
+    tr.dataset.scopes = '[]';
+    tr.innerHTML = `
+        <td class="py-1 px-2 border-r border-slate-200 text-center font-mono text-slate-400 font-semibold text-[11px] select-none bg-slate-50/60 row-index-cell">
+            ${nextIndex}
+        </td>
+        <td class="p-0 border-r border-slate-200 font-bold">
+            <input type="text" data-field="client_name" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-bold text-slate-900"/>
+        </td>
+        <td class="p-0 border-r border-slate-200">
+            <textarea rows="1" data-field="niche" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-expand text-slate-600"></textarea>
+        </td>
+        <td class="p-0 border-r border-slate-200">
+            <div class="flex items-center pr-1.5 contact-container">
+                <input type="text" data-field="contact_number" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-mono"/>
+                <a href="#" target="_blank" title="Chat on WhatsApp" class="whatsapp-btn hidden text-emerald-600 hover:text-emerald-700 p-0.5 shrink-0">
+                    <span class="material-symbols-outlined text-[15px]">chat</span>
+                </a>
+            </div>
+        </td>
+        <td class="py-1 px-2 border-r border-slate-200 relative scope-td">
+            <div class="flex flex-wrap gap-1 items-center min-h-[26px] cursor-pointer rounded px-1 hover:bg-slate-100/80 transition-colors scope-trigger" onclick="openGlobalScopePopover(event, this)">
+                <div class="scope-badges flex flex-wrap gap-1 items-center">
+                    <span class="text-slate-400 italic text-[11px] flex items-center">+ Assign Scope</span>
+                </div>
+            </div>
+        </td>
+        <td class="p-0 border-r border-slate-200">
+            <input type="date" data-field="lead_incoming_date" value="" onchange="handleNewRowBlur(this)" class="cell-input font-mono text-slate-600"/>
+        </td>
+        <td class="p-0 border-r border-slate-200">
+            <input type="text" data-field="quoted_amount" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-mono font-bold text-slate-900"/>
+        </td>
+        <td class="p-0 border-r border-slate-200">
+            <input type="text" data-field="sold_amount" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-mono font-bold text-emerald-700"/>
+        </td>
+        <td class="p-0 border-r border-slate-200 status-td">
+            <textarea rows="1" data-field="status" list="statusSuggestions" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-status"></textarea>
+        </td>
+        <td class="p-0 border-r border-slate-200">
+            <textarea rows="1" data-field="note" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-expand text-slate-700"></textarea>
+        </td>
+        <td class="py-1 px-2 text-center whitespace-nowrap actions-td">
+            <span class="text-slate-300 text-xs select-none">•</span>
+        </td>
+    `;
+    return tr;
+}
+
+// Append rows dynamically on demand (+ Add 20 Rows button)
+function appendRows(count = 20, shouldFocus = true) {
+    const tbody = document.getElementById('leadsTableBody');
+    if (!tbody) return;
+
+    const startTotal = tbody.querySelectorAll('tr.sheet-row').length;
+    const fragment = document.createDocumentFragment();
+
+    for (let i = 1; i <= count; i++) {
+        const nextIndex = startTotal + i;
+        const tr = createEmptyRowElement(nextIndex);
+        fragment.appendChild(tr);
+    }
+    tbody.appendChild(fragment);
+    updateVisibleRowCount();
+
+    if (shouldFocus) {
+        showToast(`Added ${count} new rows ✓`);
+        const firstNewRow = tbody.querySelector(`tr.sheet-row[data-row-index="${startTotal + 1}"]`);
+        if (firstNewRow) {
+            firstNewRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            const nameInput = firstNewRow.querySelector('input[data-field="client_name"]');
+            if (nameInput) nameInput.focus();
+        }
+    }
+}
+
+// Update count of total visible rows
+function updateVisibleRowCount() {
+    const el = document.getElementById('currentVisibleRows');
+    const tbody = document.getElementById('leadsTableBody');
+    if (el && tbody) {
+        el.innerText = tbody.querySelectorAll('tr.sheet-row').length;
+    }
+}
+
 // Ensure at least 6 empty rows are always available at the bottom
 function ensureEmptyRowsBuffer() {
     const tbody = document.getElementById('leadsTableBody');
     if (!tbody) return;
     const emptyRows = tbody.querySelectorAll('tr.sheet-row:not([data-lead-id])');
     if (emptyRows.length < 6) {
-        const totalRows = tbody.querySelectorAll('tr.sheet-row').length;
-        for (let i = 1; i <= 6; i++) {
-            const nextIndex = totalRows + i;
-            const tr = document.createElement('tr');
-            tr.className = 'sheet-row hover:bg-slate-50/50 transition-colors';
-            tr.dataset.rowIndex = nextIndex;
-            tr.dataset.scopes = '[]';
-            tr.innerHTML = `
-                <td class="py-1 px-2 border-r border-slate-200 text-center font-mono text-slate-400 font-semibold text-[11px] select-none bg-slate-50/60 row-index-cell">
-                    ${nextIndex}
-                </td>
-                <td class="p-0 border-r border-slate-200 font-bold">
-                    <input type="text" data-field="client_name" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-bold text-slate-900"/>
-                </td>
-                <td class="p-0 border-r border-slate-200">
-                    <textarea rows="1" data-field="niche" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-expand text-slate-600"></textarea>
-                </td>
-                <td class="p-0 border-r border-slate-200">
-                    <div class="flex items-center pr-1.5 contact-container">
-                        <input type="text" data-field="contact_number" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-mono"/>
-                        <a href="#" target="_blank" title="Chat on WhatsApp" class="whatsapp-btn hidden text-emerald-600 hover:text-emerald-700 p-0.5 shrink-0">
-                            <span class="material-symbols-outlined text-[15px]">chat</span>
-                        </a>
-                    </div>
-                </td>
-                <td class="py-1 px-2 border-r border-slate-200 relative scope-td">
-                    <div class="flex flex-wrap gap-1 items-center min-h-[26px] cursor-pointer rounded px-1 hover:bg-slate-100/80 transition-colors scope-trigger" onclick="openGlobalScopePopover(event, this)">
-                        <div class="scope-badges flex flex-wrap gap-1 items-center">
-                            <span class="text-slate-400 italic text-[11px] flex items-center">+ Assign Scope</span>
-                        </div>
-                    </div>
-                </td>
-                <td class="p-0 border-r border-slate-200">
-                    <input type="date" data-field="lead_incoming_date" value="" onchange="handleNewRowBlur(this)" class="cell-input font-mono text-slate-600"/>
-                </td>
-                <td class="p-0 border-r border-slate-200">
-                    <input type="text" data-field="quoted_amount" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-mono font-bold text-slate-900"/>
-                </td>
-                <td class="p-0 border-r border-slate-200">
-                    <input type="text" data-field="sold_amount" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-mono font-bold text-emerald-700"/>
-                </td>
-                <td class="p-0 border-r border-slate-200 status-td">
-                    <textarea rows="1" data-field="status" list="statusSuggestions" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-status"></textarea>
-                </td>
-                <td class="p-0 border-r border-slate-200">
-                    <textarea rows="1" data-field="note" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-expand text-slate-700"></textarea>
-                </td>
-                <td class="py-1 px-2 text-center whitespace-nowrap actions-td">
-                    <span class="text-slate-300 text-xs select-none">•</span>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        }
+        appendRows(6 - emptyRows.length + 5, false);
     }
 }
 
@@ -1312,6 +1375,7 @@ function setSidebarCollapsed(collapse) {
 // Restore sidebar collapse state and auto-fit textareas on page load
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('textarea.cell-input-expand').forEach(autoResizeTextarea);
+    updateVisibleRowCount();
     if (localStorage.getItem('sidebar_collapsed') === 'true') {
         setSidebarCollapsed(true);
     }
@@ -1354,6 +1418,41 @@ function handleCreateTabSubmit(event) {
     const name = (input ? input.value : '').trim();
     if (!name) return;
     window.location.href = `{{ route('leads.index') }}?campaign=${encodeURIComponent(name)}`;
+}
+
+// Delete Campaign / Month Tab
+function deleteCampaignTab(event, campaignName) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    if (!confirm(`Are you sure you want to delete tab "${campaignName}" and all of its leads? This action cannot be undone.`)) {
+        return;
+    }
+    setCloudSyncStatus('saving');
+    fetch("{{ route('leads.campaigns.destroy') }}", {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': CSRF_TOKEN,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ campaign: campaignName })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = "{{ route('leads.index') }}";
+        } else {
+            alert('Failed to delete tab: ' + (data.message || 'Unknown error'));
+            setCloudSyncStatus('error');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Failed to delete tab');
+        setCloudSyncStatus('error');
+    });
 }
 </script>
 

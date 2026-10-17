@@ -399,4 +399,20 @@ class LeadController extends Controller
         return redirect()->route('leads.index', ['campaign' => $campaign])
             ->with('success', 'Lead deleted successfully!');
     }
+
+    public function destroyCampaign(Request $request)
+    {
+        $request->validate([
+            'campaign' => 'required|string',
+        ]);
+        $campaign = $request->campaign;
+
+        Lead::where('campaign_month', $campaign)->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+
+        return redirect()->route('leads.index')->with('success', "Tab '{$campaign}' deleted successfully!");
+    }
 }
