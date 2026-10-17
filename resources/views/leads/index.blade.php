@@ -294,22 +294,14 @@
                 </a>
 
                 @foreach($campaigns as $campaign)
-                    <div class="inline-flex items-center rounded-md text-xs font-bold transition-all whitespace-nowrap {{ $selectedCampaign === $campaign ? 'bg-secondary text-white shadow-sm' : 'bg-slate-50 text-slate-700 hover:bg-slate-200 border border-slate-200' }}">
-                        <a href="{{ route('leads.index', array_merge(request()->except('page'), ['campaign' => $campaign])) }}"
-                           class="px-3 py-1.5 flex items-center space-x-1.5 text-inherit no-underline">
-                            <span class="material-symbols-outlined text-[15px]">campaign</span>
-                            <span>{{ $campaign }}</span>
-                            @if($loop->first)
-                                <span class="px-1.5 py-0.2 bg-emerald-400 text-slate-900 text-[9px] font-black rounded uppercase tracking-wider">Latest</span>
-                            @endif
-                        </a>
-                        <button type="button" 
-                                onclick="deleteCampaignTab(event, '{{ addslashes($campaign) }}')" 
-                                class="pr-2 pl-0.5 py-1 text-inherit opacity-60 hover:opacity-100 hover:text-rose-300 transition-opacity cursor-pointer" 
-                                title="Delete '{{ $campaign }}' tab and all its leads">
-                            <span class="material-symbols-outlined text-[14px]">close</span>
-                        </button>
-                    </div>
+                    <a href="{{ route('leads.index', array_merge(request()->except('page'), ['campaign' => $campaign])) }}"
+                       class="px-3.5 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap flex items-center space-x-1.5 {{ $selectedCampaign === $campaign ? 'bg-secondary text-white shadow-sm' : 'bg-slate-50 text-slate-700 hover:bg-slate-200 border border-slate-200' }}">
+                        <span class="material-symbols-outlined text-[15px]">campaign</span>
+                        <span>{{ $campaign }}</span>
+                        @if($loop->first)
+                            <span class="px-1.5 py-0.2 bg-emerald-400 text-slate-900 text-[9px] font-black rounded uppercase tracking-wider">Latest</span>
+                        @endif
+                    </a>
                 @endforeach
 
                 <!-- + Add Tab Button (Google Sheets Style) -->
@@ -319,10 +311,23 @@
                 </button>
             </div>
 
-            <div class="flex items-center space-x-2 text-xs text-slate-500 font-medium shrink-0 px-2">
-                <span>Total: <strong class="text-primary font-bold" id="totalLeadsCount">{{ $totalLeads }}</strong> leads</span>
-                <span>•</span>
-                <span>Won: <strong class="text-emerald-600 font-bold">{{ $convertedCount }}</strong></span>
+            <div class="flex items-center space-x-3 text-xs shrink-0 px-2">
+                <div class="flex items-center space-x-2 text-slate-500 font-medium">
+                    <span>Total: <strong class="text-primary font-bold" id="totalLeadsCount">{{ $totalLeads }}</strong> leads</span>
+                    <span>•</span>
+                    <span>Won: <strong class="text-emerald-600 font-bold">{{ $convertedCount }}</strong></span>
+                </div>
+
+                @if($selectedCampaign && $selectedCampaign !== 'all')
+                    <div class="h-4 w-px bg-slate-200"></div>
+                    <button type="button" 
+                            onclick="openDeleteTabModal('{{ addslashes($selectedCampaign) }}', {{ $totalLeads }})" 
+                            class="inline-flex items-center px-2.5 py-1 text-rose-600 hover:text-white hover:bg-rose-600 border border-rose-200 hover:border-rose-600 rounded-md text-xs font-semibold transition-all cursor-pointer shadow-2xs" 
+                            title="Delete current tab '{{ $selectedCampaign }}'">
+                        <span class="material-symbols-outlined text-[15px] mr-1">delete</span>
+                        <span>Delete Tab</span>
+                    </button>
+                @endif
             </div>
         </div>
 
@@ -675,6 +680,35 @@
                 <button type="submit" class="px-4 py-1.5 bg-secondary text-white text-xs font-bold rounded hover:bg-cyan-700 shadow-sm">Open Tab</button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Delete Tab Confirmation Modal (Standard Warning Popup) -->
+<div id="deleteTabModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl border border-slate-200 max-w-sm w-full p-5 space-y-4">
+        <div class="flex items-start space-x-3">
+            <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[24px]">warning</span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h3 class="font-headline-md font-bold text-slate-900 text-sm">
+                    Delete Tab: <span id="deleteModalTabName" class="text-rose-600 break-words"></span>?
+                </h3>
+                <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                    Are you sure you want to delete this tab and all <strong id="deleteModalLeadCount" class="text-slate-800">0</strong> leads inside it? This action <span class="font-bold text-rose-600">cannot be undone</span>.
+                </p>
+            </div>
+        </div>
+
+        <div class="flex justify-end space-x-2 pt-2 border-t border-slate-100">
+            <button type="button" onclick="closeDeleteTabModal()" class="px-3.5 py-1.5 bg-slate-100 text-slate-700 text-xs font-semibold rounded-md hover:bg-slate-200 transition-colors cursor-pointer">
+                Cancel
+            </button>
+            <button type="button" id="confirmDeleteTabBtn" onclick="confirmDeleteTab()" class="px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-md shadow-sm transition-all flex items-center space-x-1 cursor-pointer">
+                <span class="material-symbols-outlined text-[16px]">delete</span>
+                <span id="confirmDeleteTabText">Yes, Delete Tab</span>
+            </button>
+        </div>
     </div>
 </div>
 
@@ -1420,16 +1454,34 @@ function handleCreateTabSubmit(event) {
     window.location.href = `{{ route('leads.index') }}?campaign=${encodeURIComponent(name)}`;
 }
 
-// Delete Campaign / Month Tab
-function deleteCampaignTab(event, campaignName) {
-    if (event) {
-        event.stopPropagation();
-        event.preventDefault();
-    }
-    if (!confirm(`Are you sure you want to delete tab "${campaignName}" and all of its leads? This action cannot be undone.`)) {
-        return;
-    }
+// Delete Campaign / Month Tab (Standard Warning Modal)
+let tabNameToDelete = '';
+
+function openDeleteTabModal(campaignName, leadCount) {
+    tabNameToDelete = campaignName;
+    const nameEl = document.getElementById('deleteModalTabName');
+    const countEl = document.getElementById('deleteModalLeadCount');
+    if (nameEl) nameEl.innerText = campaignName;
+    if (countEl) countEl.innerText = leadCount;
+    const modal = document.getElementById('deleteTabModal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeDeleteTabModal() {
+    const modal = document.getElementById('deleteTabModal');
+    if (modal) modal.classList.add('hidden');
+    tabNameToDelete = '';
+}
+
+function confirmDeleteTab() {
+    if (!tabNameToDelete) return;
+
+    const btn = document.getElementById('confirmDeleteTabBtn');
+    const btnText = document.getElementById('confirmDeleteTabText');
+    if (btn) btn.disabled = true;
+    if (btnText) btnText.innerText = 'Deleting...';
     setCloudSyncStatus('saving');
+
     fetch("{{ route('leads.campaigns.destroy') }}", {
         method: 'DELETE',
         headers: {
@@ -1437,7 +1489,7 @@ function deleteCampaignTab(event, campaignName) {
             'X-CSRF-TOKEN': CSRF_TOKEN,
             'Accept': 'application/json'
         },
-        body: JSON.stringify({ campaign: campaignName })
+        body: JSON.stringify({ campaign: tabNameToDelete })
     })
     .then(res => res.json())
     .then(data => {
@@ -1445,12 +1497,16 @@ function deleteCampaignTab(event, campaignName) {
             window.location.href = "{{ route('leads.index') }}";
         } else {
             alert('Failed to delete tab: ' + (data.message || 'Unknown error'));
+            if (btn) btn.disabled = false;
+            if (btnText) btnText.innerText = 'Yes, Delete Tab';
             setCloudSyncStatus('error');
         }
     })
     .catch(err => {
         console.error(err);
         alert('Failed to delete tab');
+        if (btn) btn.disabled = false;
+        if (btnText) btnText.innerText = 'Yes, Delete Tab';
         setCloudSyncStatus('error');
     });
 }
