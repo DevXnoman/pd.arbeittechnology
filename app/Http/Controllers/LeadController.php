@@ -113,6 +113,9 @@ class LeadController extends Controller
         if (empty($validated['client_name'])) {
             $validated['client_name'] = 'New Client';
         }
+        if (empty($validated['contact_number'])) {
+            $validated['contact_number'] = '-';
+        }
         if ($validated['campaign_month'] === 'all') {
             $validated['campaign_month'] = date('F Y');
         }
@@ -126,9 +129,12 @@ class LeadController extends Controller
         try {
             $lead = Lead::create($validated);
         } catch (\Exception $e) {
-            // Fallback if MySQL column has not yet been changed to nullable
+            // Fallback if MySQL columns have not yet been changed to nullable
             if (str_contains($e->getMessage(), 'lead_incoming_date')) {
                 $validated['lead_incoming_date'] = now()->toDateString();
+                $lead = Lead::create($validated);
+            } elseif (str_contains($e->getMessage(), 'contact_number')) {
+                $validated['contact_number'] = '-';
                 $lead = Lead::create($validated);
             } else {
                 throw $e;
@@ -203,6 +209,10 @@ class LeadController extends Controller
                 $validated['work_scope'] = is_array($request->work_scope) ? array_values(array_filter($request->work_scope)) : [];
             }
 
+            if (array_key_exists('contact_number', $validated) && empty($validated['contact_number'])) {
+                $validated['contact_number'] = '-';
+            }
+
             if (array_key_exists('lead_incoming_date', $validated)) {
                 if (empty($validated['lead_incoming_date'])) {
                     $validated['lead_incoming_date'] = null;
@@ -215,6 +225,9 @@ class LeadController extends Controller
                 // In case the column in MySQL is not nullable yet
                 if (str_contains($e->getMessage(), 'lead_incoming_date')) {
                     $validated['lead_incoming_date'] = now()->toDateString();
+                    $lead->update($validated);
+                } elseif (str_contains($e->getMessage(), 'contact_number')) {
+                    $validated['contact_number'] = '-';
                     $lead->update($validated);
                 } else {
                     throw $e;

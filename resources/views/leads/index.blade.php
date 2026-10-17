@@ -108,53 +108,41 @@
             outline: none;
         }
 
-        /* Expanding Multi-line Textarea Cells (Niche, Note / Activity) */
+        /* Clean In-Place Auto-Fit Textarea Cells (Niche, Note / Activity) */
         .cell-input-expand {
             width: 100%;
+            min-height: 26px;
             height: 26px;
             background-color: transparent;
-            border: 0;
+            border: 1px solid transparent;
             padding: 3px 6px;
             font-size: 11px;
             color: #1e293b;
             outline: none;
             font-weight: 500;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
             resize: none;
             cursor: text;
             display: block;
             line-height: 1.4;
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-y: hidden;
+            transition: border-color 0.15s, background-color 0.15s;
         }
         .cell-input-expand:focus {
-            position: absolute;
-            top: -2px;
-            left: 50% !important;
-            transform: translateX(-50%) !important;
-            z-index: 60;
-            width: 300px !important;
-            max-width: calc(100vw - 32px) !important;
-            height: 84px !important;
             background-color: #ffffff;
-            box-shadow: 0 12px 28px -5px rgba(0, 0, 0, 0.22), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            border: 2px solid #0284c7;
-            border-radius: 8px;
-            padding: 6px 10px;
-            white-space: pre-wrap !important;
-            word-break: break-word !important;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            resize: none;
+            border: 1.5px solid #0284c7;
+            border-radius: 4px;
+            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
             outline: none;
-            line-height: 1.45;
+            overflow-y: auto;
         }
 
-        /* Expanding Status Cell (Status) */
+        /* Clean In-Place Status Cell (Status) */
         .cell-input-status {
             width: 100%;
             height: 26px;
-            background-color: rgba(254, 243, 199, 0.7);
+            background-color: rgba(254, 243, 199, 0.8);
             border: 1px solid #fde68a;
             padding: 2px 6px;
             font-size: 11px;
@@ -169,28 +157,14 @@
             cursor: text;
             display: block;
             line-height: 1.4;
+            transition: border-color 0.15s, background-color 0.15s;
         }
         .cell-input-status:focus {
-            position: absolute;
-            top: -2px;
-            left: 50% !important;
-            transform: translateX(-50%) !important;
-            z-index: 60;
-            width: 300px !important;
-            max-width: calc(100vw - 32px) !important;
-            height: 84px !important;
-            background-color: #fffbeb;
-            box-shadow: 0 12px 28px -5px rgba(0, 0, 0, 0.22), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            border: 2px solid #f59e0b;
-            border-radius: 8px;
-            padding: 6px 10px;
-            white-space: pre-wrap !important;
-            word-break: break-word !important;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            resize: none;
+            background-color: #ffffff;
+            border: 1.5px solid #f59e0b;
+            border-radius: 4px;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
             outline: none;
-            line-height: 1.45;
         }
     </style>
 </head>
@@ -364,7 +338,8 @@
                         @foreach($leads as $index => $lead)
                             @php
                                 $currentScopes = is_array($lead->work_scope) ? $lead->work_scope : [];
-                                $cleanPhone = preg_replace('/[^0-9]/', '', $lead->contact_number);
+                                $cleanPhone = ($lead->contact_number && $lead->contact_number !== '-') ? preg_replace('/[^0-9]/', '', $lead->contact_number) : '';
+                                $displayPhone = $lead->contact_number === '-' ? '' : $lead->contact_number;
                             @endphp
                             <tr class="sheet-row hover:bg-slate-50/80 transition-colors {{ $lead->project_id ? 'bg-emerald-50/40' : '' }}" 
                                 data-lead-id="{{ $lead->id }}" 
@@ -391,7 +366,7 @@
                                 <!-- Contact Number (Editable + WhatsApp Link) -->
                                 <td class="p-0 border-r border-slate-200">
                                     <div class="flex items-center pr-1.5 contact-container">
-                                        <input type="text" value="{{ $lead->contact_number }}" title="{{ $lead->contact_number }}" data-field="contact_number"
+                                        <input type="text" value="{{ $displayPhone }}" title="{{ $displayPhone }}" data-field="contact_number"
                                                oninput="handleCellInput(this)" onblur="handleCellBlur(this)"
                                                class="cell-input font-mono"/>
                                         <a href="{{ $cleanPhone ? 'https://wa.me/'.$cleanPhone : '#' }}" target="_blank" title="Chat on WhatsApp" 
@@ -739,10 +714,20 @@ function updateRowWhatsApp(row, phone) {
     }
 }
 
+function autoResizeTextarea(el) {
+    if (!el || el.tagName !== 'TEXTAREA') return;
+    el.style.height = 'auto';
+    const newHeight = Math.max(26, Math.min(130, el.scrollHeight));
+    el.style.height = newHeight + 'px';
+}
+
 // Real-time debounce auto-save for EXISTING cells
 const cellDebounceTimers = new Map();
 
 function handleCellInput(input) {
+    input.title = input.value;
+    if (input.tagName === 'TEXTAREA') autoResizeTextarea(input);
+
     const row = input.closest('tr');
     const leadId = row.getAttribute('data-lead-id');
     if (!leadId) {
@@ -817,6 +802,9 @@ function saveExistingFieldNow(leadId, fieldName, fieldValue, row) {
 const newRowDebounceTimers = new Map();
 
 function handleNewRowInput(input) {
+    input.title = input.value;
+    if (input.tagName === 'TEXTAREA') autoResizeTextarea(input);
+
     const row = input.closest('tr');
     if (row.hasAttribute('data-lead-id')) {
         handleCellInput(input);
@@ -1319,8 +1307,9 @@ function setSidebarCollapsed(collapse) {
     }
 }
 
-// Restore sidebar collapse state on page load
+// Restore sidebar collapse state and auto-fit textareas on page load
 document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('textarea.cell-input-expand').forEach(autoResizeTextarea);
     if (localStorage.getItem('sidebar_collapsed') === 'true') {
         setSidebarCollapsed(true);
     }
