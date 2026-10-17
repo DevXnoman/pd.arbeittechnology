@@ -277,30 +277,30 @@
             <h1 class="font-headline-md text-xs font-bold text-cyan-400 leading-snug">Lead & Project Management System</h1>
         </div>
     </div>
-    <nav class="flex-1 space-y-1 overflow-y-auto pr-1">
+    <nav class="flex-1 space-y-1.5 overflow-y-auto pr-1">
         <!-- Dashboard -->
-        <a class="flex items-center px-3 py-2.5 text-on-primary-container opacity-70 hover:opacity-100 transition-all rounded-md hover:bg-primary-fixed-dim/10 group" href="{{ route('projects.index') }}" title="Dashboard">
-            <span class="material-symbols-outlined mr-2.5 text-[18px] sidebar-icon">dashboard</span>
+        <a class="flex items-center px-3 py-2.5 text-on-primary-container opacity-75 hover:opacity-100 transition-all rounded-md hover:bg-white/10 group" href="{{ route('projects.index') }}" title="Dashboard">
+            <img src="{{ asset('images/icons/dashboard.png') }}" alt="Dashboard" class="w-5 h-5 mr-2.5 object-contain sidebar-icon shrink-0"/>
             <span class="font-label-md text-xs sidebar-text whitespace-nowrap">Dashboard</span>
         </a>
         <!-- Add New Project -->
-        <a class="flex items-center px-3 py-2.5 text-on-primary-container opacity-70 hover:opacity-100 transition-all rounded-md hover:bg-primary-fixed-dim/10 group" href="{{ route('projects.create') }}" title="Add New Project">
-            <span class="material-symbols-outlined mr-2.5 text-[18px] sidebar-icon">add_box</span>
+        <a class="flex items-center px-3 py-2.5 text-on-primary-container opacity-75 hover:opacity-100 transition-all rounded-md hover:bg-white/10 group" href="{{ route('projects.create') }}" title="Add New Project">
+            <img src="{{ asset('images/icons/add-project.png') }}" alt="Add New Project" class="w-5 h-5 mr-2.5 object-contain sidebar-icon shrink-0"/>
             <span class="font-label-md text-xs sidebar-text whitespace-nowrap">Add New Project</span>
         </a>
         <!-- Projects -->
-        <a class="flex items-center px-3 py-2.5 text-on-primary-container opacity-70 hover:opacity-100 transition-all rounded-md hover:bg-primary-fixed-dim/10 group" href="{{ route('projects.list') }}" title="Projects">
-            <span class="material-symbols-outlined mr-2.5 text-[18px] sidebar-icon">folder_open</span>
+        <a class="flex items-center px-3 py-2.5 text-on-primary-container opacity-75 hover:opacity-100 transition-all rounded-md hover:bg-white/10 group" href="{{ route('projects.list') }}" title="Projects">
+            <img src="{{ asset('images/icons/projects.png') }}" alt="Projects" class="w-5 h-5 mr-2.5 object-contain sidebar-icon shrink-0"/>
             <span class="font-label-md text-xs sidebar-text whitespace-nowrap">Projects</span>
         </a>
         <!-- Active Tab: Lead Tracking -->
-        <a class="flex items-center px-3 py-2.5 bg-primary-container text-on-primary-container rounded-md transition-transform duration-200 ease-in-out hover:bg-primary-fixed-dim/10 font-semibold group" href="{{ route('leads.index') }}" title="Lead Tracking">
-            <span class="material-symbols-outlined mr-2.5 text-[18px] sidebar-icon" style="font-variation-settings: 'FILL' 1;">contacts</span>
-            <span class="font-label-md text-xs sidebar-text whitespace-nowrap">Lead Tracking</span>
+        <a class="flex items-center px-3 py-2.5 bg-primary-container text-white rounded-md transition-transform duration-200 ease-in-out hover:bg-primary-fixed-dim/10 font-semibold group shadow-xs" href="{{ route('leads.index') }}" title="Lead Tracking">
+            <img src="{{ asset('images/icons/leads.png') }}" alt="Lead Tracking" class="w-5 h-5 mr-2.5 object-contain sidebar-icon shrink-0"/>
+            <span class="font-label-md text-xs sidebar-text whitespace-nowrap text-cyan-300">Lead Tracking</span>
         </a>
         <!-- Money Receipt -->
-        <a class="flex items-center px-3 py-2.5 text-on-primary-container opacity-70 hover:opacity-100 transition-all rounded-md hover:bg-primary-fixed-dim/10 group" href="{{ route('invoices.create') }}" title="Money Receipt">
-            <span class="material-symbols-outlined mr-2.5 text-[18px] sidebar-icon">receipt_long</span>
+        <a class="flex items-center px-3 py-2.5 text-on-primary-container opacity-75 hover:opacity-100 transition-all rounded-md hover:bg-white/10 group" href="{{ route('invoices.create') }}" title="Money Receipt">
+            <img src="{{ asset('images/icons/receipt.png') }}" alt="Money Receipt" class="w-5 h-5 mr-2.5 object-contain sidebar-icon shrink-0"/>
             <span class="font-label-md text-xs sidebar-text whitespace-nowrap">Money Receipt</span>
         </a>
     </nav>
@@ -315,7 +315,7 @@
             <button type="button" onclick="toggleDesktopSidebar()" class="hidden md:flex items-center justify-center p-1.5 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors" title="Collapse/Expand Sidebar">
                 <span class="material-symbols-outlined text-[20px]" id="headerCollapseIcon">menu_open</span>
             </button>
-            <span class="material-symbols-outlined text-primary text-[22px]">contacts</span>
+            <img src="{{ asset('images/icons/leads.png') }}" alt="Lead Tracking" class="w-5 h-5 object-contain shrink-0"/>
             <h2 class="font-headline-md font-bold text-base text-primary">Lead Tracking Directory</h2>
             <!-- Google Sheets Style Cloud Sync Status Indicator -->
             <div class="hidden sm:flex items-center space-x-1.5 text-xs pl-3 border-l border-slate-200" id="cloudSyncIndicator" title="All edits automatically save to cloud in real-time">

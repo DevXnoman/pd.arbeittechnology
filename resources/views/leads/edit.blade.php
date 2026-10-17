@@ -42,21 +42,21 @@
             <h1 class="text-xs font-bold text-cyan-400 leading-snug">Lead & Project Management System</h1>
         </div>
     </div>
-    <nav class="space-y-1">
-        <a class="flex items-center px-3 py-2 text-white/70 hover:bg-white/10 rounded-md text-xs" href="{{ route('projects.index') }}">
-            <span class="material-symbols-outlined mr-2 text-[18px]">dashboard</span> Dashboard
+    <nav class="space-y-1.5">
+        <a class="flex items-center px-3 py-2 text-white/75 hover:bg-white/10 rounded-md text-xs" href="{{ route('projects.index') }}">
+            <img src="{{ asset('images/icons/dashboard.png') }}" alt="Dashboard" class="w-4 h-4 mr-2 object-contain shrink-0"/> Dashboard
         </a>
-        <a class="flex items-center px-3 py-2 text-white/70 hover:bg-white/10 rounded-md text-xs" href="{{ route('projects.create') }}">
-            <span class="material-symbols-outlined mr-2 text-[18px]">add_box</span> Add New Project
+        <a class="flex items-center px-3 py-2 text-white/75 hover:bg-white/10 rounded-md text-xs" href="{{ route('projects.create') }}">
+            <img src="{{ asset('images/icons/add-project.png') }}" alt="Add New Project" class="w-4 h-4 mr-2 object-contain shrink-0"/> Add New Project
         </a>
-        <a class="flex items-center px-3 py-2 text-white/70 hover:bg-white/10 rounded-md text-xs" href="{{ route('projects.list') }}">
-            <span class="material-symbols-outlined mr-2 text-[18px]">folder_open</span> Projects
+        <a class="flex items-center px-3 py-2 text-white/75 hover:bg-white/10 rounded-md text-xs" href="{{ route('projects.list') }}">
+            <img src="{{ asset('images/icons/projects.png') }}" alt="Projects" class="w-4 h-4 mr-2 object-contain shrink-0"/> Projects
         </a>
-        <a class="flex items-center px-3 py-2 bg-slate-800 text-white rounded-md text-xs font-bold" href="{{ route('leads.index') }}">
-            <span class="material-symbols-outlined mr-2 text-[18px]">contacts</span> Lead Tracking
+        <a class="flex items-center px-3 py-2 bg-slate-800 text-cyan-300 rounded-md text-xs font-bold" href="{{ route('leads.index') }}">
+            <img src="{{ asset('images/icons/leads.png') }}" alt="Lead Tracking" class="w-4 h-4 mr-2 object-contain shrink-0"/> Lead Tracking
         </a>
-        <a class="flex items-center px-3 py-2 text-white/70 hover:bg-white/10 rounded-md text-xs" href="{{ route('invoices.create') }}">
-            <span class="material-symbols-outlined mr-2 text-[18px]">receipt_long</span> Money Receipt
+        <a class="flex items-center px-3 py-2 text-white/75 hover:bg-white/10 rounded-md text-xs" href="{{ route('invoices.create') }}">
+            <img src="{{ asset('images/icons/receipt.png') }}" alt="Money Receipt" class="w-4 h-4 mr-2 object-contain shrink-0"/> Money Receipt
         </a>
     </nav>
 </aside>
