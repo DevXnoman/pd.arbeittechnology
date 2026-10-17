@@ -297,9 +297,7 @@
     <!-- TopAppBar -->
     <header class="bg-surface border-b border-border-light flex flex-wrap sm:flex-nowrap justify-between items-center w-full px-4 sm:px-6 py-2 sm:h-14 shrink-0 z-10 shadow-sm gap-2">
         <div class="flex items-center space-x-3">
-            <button type="button" onclick="toggleDesktopSidebar()" class="hidden md:flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors shadow-2xs" title="Toggle Sidebar">
-                <span class="material-symbols-outlined text-[19px]" id="headerCollapseIcon">menu_open</span>
-            </button>
+
             <img src="{{ asset('images/icons/leads.png') }}" alt="Lead Tracking" class="w-5 h-5 object-contain shrink-0"/>
             <h2 class="font-headline-md font-bold text-base text-primary">Lead Tracking Directory</h2>
             <!-- Google Sheets Style Cloud Sync Status Indicator -->
