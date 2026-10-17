@@ -87,11 +87,11 @@
 <div id="mobileBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden md:hidden transition-opacity"></div>
 
 <!-- SideNavBar Drawer -->
-<aside id="sidebar" class="fixed md:static inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col bg-primary text-on-primary h-full w-60 shadow-xl md:shadow-md py-6 px-3 space-y-1.5 z-50 md:z-20 shrink-0">
+<aside id="sidebar" class="fixed md:static inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col bg-slate-900 text-white h-full w-52 border-r border-slate-800 shadow-xl md:shadow-none py-6 px-3 space-y-1.5 z-50 md:z-20 shrink-0">
     <div class="mb-6 px-1 flex flex-col space-y-2.5">
         <div class="flex items-center justify-between w-full">
-            <div class="bg-white rounded-xl p-2.5 flex items-center justify-center flex-1 min-w-0 shadow-sm">
-                <img class="h-12 w-auto max-w-full object-contain" src="{{ asset('images/logo.png') }}" alt="Logo"/>
+            <div class="bg-white rounded-xl p-2 flex items-center justify-center w-full min-w-0 shadow-sm">
+                <img class="h-11 w-auto max-w-full object-contain" src="{{ asset('images/logo.png') }}" alt="Logo"/>
             </div>
             <button type="button" onclick="toggleMobileSidebar()" class="md:hidden text-white/70 hover:text-white p-1 ml-1.5 shrink-0">
                 <span class="material-symbols-outlined text-[20px]">close</span>
@@ -103,25 +103,25 @@
     </div>
     <nav class="flex-1 space-y-1.5 overflow-y-auto pr-1">
         <!-- Dashboard -->
-        <a class="flex items-center px-3 py-2.5 text-on-primary-container opacity-75 hover:opacity-100 transition-all rounded-md hover:bg-white/10" href="{{ route('projects.index') }}">
+        <a class="flex items-center px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all font-medium group" href="{{ route('projects.index') }}">
             <img src="{{ asset('images/icons/dashboard.png') }}" alt="Dashboard" class="w-5 h-5 mr-2.5 object-contain shrink-0"/>
             <span class="font-label-md text-xs">Dashboard</span>
         </a>
         <!-- Add New Project -->
-        <a class="flex items-center px-3 py-2.5 text-on-primary-container opacity-75 hover:opacity-100 transition-all rounded-md hover:bg-white/10" href="{{ route('projects.create') }}">
+        <a class="flex items-center px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all font-medium group" href="{{ route('projects.create') }}">
             <img src="{{ asset('images/icons/add-project.png') }}" alt="Add New Project" class="w-5 h-5 mr-2.5 object-contain shrink-0"/>
             <span class="font-label-md text-xs">Add New Project</span>
         </a>
         <!-- Projects (Active) -->
-        <a class="flex items-center px-3 py-2.5 bg-primary-container text-white rounded-md transition-transform duration-200 ease-in-out hover:bg-primary-fixed-dim/10 font-semibold shadow-xs" href="{{ route('projects.list') }}">
+        <a class="flex items-center px-3 py-2.5 bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 rounded-lg transition-all font-semibold shadow-xs" href="{{ route('projects.list') }}">
             <img src="{{ asset('images/icons/projects.png') }}" alt="Projects" class="w-5 h-5 mr-2.5 object-contain shrink-0"/>
-            <span class="font-label-md text-xs text-cyan-300">Projects</span>
+            <span class="font-label-md text-xs text-cyan-300 font-semibold">Projects</span>
         </a>
-        <a class="flex items-center px-3 py-2.5 text-on-primary-container opacity-75 hover:opacity-100 transition-all rounded-md hover:bg-white/10" href="{{ route('leads.index') }}">
+        <a class="flex items-center px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all font-medium group" href="{{ route('leads.index') }}">
             <img src="{{ asset('images/icons/leads.png') }}" alt="Lead Tracking" class="w-5 h-5 mr-2.5 object-contain shrink-0"/>
             <span class="font-label-md text-xs">Lead Tracking</span>
         </a>
-        <a class="flex items-center px-3 py-2.5 text-on-primary-container opacity-75 hover:opacity-100 transition-all rounded-md hover:bg-white/10" href="{{ route('invoices.create') }}">
+        <a class="flex items-center px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all font-medium group" href="{{ route('invoices.create') }}">
             <img src="{{ asset('images/icons/receipt.png') }}" alt="Money Receipt" class="w-5 h-5 mr-2.5 object-contain shrink-0"/>
             <span class="font-label-md text-xs">Money Receipt</span>
         </a>

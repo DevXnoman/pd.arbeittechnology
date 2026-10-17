@@ -35,29 +35,29 @@
 <body class="bg-surface-subtle text-on-surface font-body-md min-h-screen flex flex-col md:flex-row">
 
 <!-- SideNavBar -->
-<aside class="w-60 bg-primary text-white flex flex-col shrink-0 p-4 space-y-2 hidden md:flex min-h-screen">
+<aside class="w-52 bg-slate-900 text-white flex flex-col shrink-0 p-4 space-y-2 hidden md:flex min-h-screen border-r border-slate-800">
     <div class="flex flex-col space-y-2.5 mb-6 px-1">
         <div class="bg-white rounded-xl p-2.5 flex items-center justify-center w-full shadow-sm">
-            <img class="h-12 w-auto max-w-full object-contain" src="{{ asset('images/logo.png') }}" alt="Logo"/>
+            <img class="h-11 w-auto max-w-full object-contain" src="{{ asset('images/logo.png') }}" alt="Logo"/>
         </div>
         <div>
             <h1 class="text-xs font-bold text-cyan-400 leading-snug">Lead & Project Management System</h1>
         </div>
     </div>
     <nav class="space-y-1.5">
-        <a class="flex items-center px-3 py-2 text-white/75 hover:bg-white/10 rounded-md text-xs" href="{{ route('projects.index') }}">
+        <a class="flex items-center px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-md text-xs font-medium transition-all" href="{{ route('projects.index') }}">
             <img src="{{ asset('images/icons/dashboard.png') }}" alt="Dashboard" class="w-4 h-4 mr-2 object-contain shrink-0"/> Dashboard
         </a>
-        <a class="flex items-center px-3 py-2 text-white/75 hover:bg-white/10 rounded-md text-xs" href="{{ route('projects.create') }}">
+        <a class="flex items-center px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-md text-xs font-medium transition-all" href="{{ route('projects.create') }}">
             <img src="{{ asset('images/icons/add-project.png') }}" alt="Add New Project" class="w-4 h-4 mr-2 object-contain shrink-0"/> Add New Project
         </a>
-        <a class="flex items-center px-3 py-2 text-white/75 hover:bg-white/10 rounded-md text-xs" href="{{ route('projects.list') }}">
+        <a class="flex items-center px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-md text-xs font-medium transition-all" href="{{ route('projects.list') }}">
             <img src="{{ asset('images/icons/projects.png') }}" alt="Projects" class="w-4 h-4 mr-2 object-contain shrink-0"/> Projects
         </a>
-        <a class="flex items-center px-3 py-2 bg-slate-800 text-cyan-300 rounded-md text-xs font-bold" href="{{ route('leads.index') }}">
+        <a class="flex items-center px-3 py-2 bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 rounded-md text-xs font-semibold shadow-xs" href="{{ route('leads.index') }}">
             <img src="{{ asset('images/icons/leads.png') }}" alt="Lead Tracking" class="w-4 h-4 mr-2 object-contain shrink-0"/> Lead Tracking
         </a>
-        <a class="flex items-center px-3 py-2 text-white/75 hover:bg-white/10 rounded-md text-xs" href="{{ route('invoices.create') }}">
+        <a class="flex items-center px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-md text-xs font-medium transition-all" href="{{ route('invoices.create') }}">
             <img src="{{ asset('images/icons/receipt.png') }}" alt="Money Receipt" class="w-4 h-4 mr-2 object-contain shrink-0"/> Money Receipt
         </a>
     </nav>

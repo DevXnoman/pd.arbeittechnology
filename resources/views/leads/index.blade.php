@@ -238,16 +238,21 @@
 <div id="mobileBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden md:hidden transition-opacity"></div>
 
 <!-- SideNavBar Drawer -->
-<aside id="sidebar" class="fixed md:static inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-all duration-300 ease-in-out flex flex-col bg-primary text-on-primary h-full w-60 shadow-xl md:shadow-md py-6 px-3 space-y-1.5 z-50 md:z-20 shrink-0">
+<aside id="sidebar" class="relative fixed md:static inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-all duration-300 ease-in-out flex flex-col bg-slate-900 text-white h-full w-52 border-r border-slate-800 shadow-xl md:shadow-none py-6 px-3 space-y-1.5 z-50 md:z-20 shrink-0">
+    <!-- Floating Edge Collapse/Expand Toggle Button (Desktop) -->
+    <button type="button" 
+            onclick="toggleDesktopSidebar()" 
+            id="desktopCollapseBtn"
+            class="hidden md:flex absolute -right-3 top-7 z-30 w-6 h-6 rounded-full bg-slate-900 border border-slate-700/90 text-slate-300 hover:text-white hover:bg-slate-800 shadow-md items-center justify-center transition-all duration-200 hover:scale-110 focus:outline-none cursor-pointer" 
+            title="Toggle Sidebar (Collapse / Expand)">
+        <span class="material-symbols-outlined text-[16px] transition-transform duration-200" id="sidebarCollapseIcon">chevron_left</span>
+    </button>
+
     <div class="mb-6 px-1 flex flex-col space-y-2.5 sidebar-header-wrapper transition-all">
         <div class="flex items-center justify-between w-full">
-            <div class="bg-white rounded-xl p-2.5 flex items-center justify-center flex-1 min-w-0 shadow-sm sidebar-logo transition-all">
-                <img class="h-12 w-auto max-w-full object-contain" src="{{ asset('images/logo.png') }}" alt="Logo"/>
+            <div class="bg-white rounded-xl p-2 flex items-center justify-center w-full min-w-0 shadow-sm sidebar-logo transition-all">
+                <img class="h-11 w-auto max-w-full object-contain" src="{{ asset('images/logo.png') }}" alt="Logo"/>
             </div>
-            <!-- Desktop Collapse Button -->
-            <button type="button" onclick="toggleDesktopSidebar()" class="hidden md:flex text-white/70 hover:text-white p-1 ml-1.5 rounded-md hover:bg-white/10 transition-colors shrink-0" title="Toggle Sidebar">
-                <span class="material-symbols-outlined text-[20px]" id="sidebarCollapseIcon">menu_open</span>
-            </button>
             <!-- Mobile Close Button -->
             <button type="button" onclick="toggleMobileSidebar()" class="md:hidden text-white/70 hover:text-white p-1 ml-1.5 shrink-0">
                 <span class="material-symbols-outlined text-[20px]">close</span>
@@ -259,29 +264,29 @@
     </div>
     <nav class="flex-1 space-y-1.5 overflow-y-auto pr-1">
         <!-- Dashboard -->
-        <a class="flex items-center px-3 py-2.5 text-on-primary-container opacity-75 hover:opacity-100 transition-all rounded-md hover:bg-white/10 group" href="{{ route('projects.index') }}" title="Dashboard">
+        <a class="flex items-center px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all group font-medium" href="{{ route('projects.index') }}" title="Dashboard">
             <img src="{{ asset('images/icons/dashboard.png') }}" alt="Dashboard" class="w-5 h-5 mr-2.5 object-contain sidebar-icon shrink-0"/>
-            <span class="font-label-md text-xs sidebar-text whitespace-nowrap">Dashboard</span>
+            <span class="font-label-md text-xs sidebar-text whitespace-nowrap text-slate-300 group-hover:text-white">Dashboard</span>
         </a>
         <!-- Add New Project -->
-        <a class="flex items-center px-3 py-2.5 text-on-primary-container opacity-75 hover:opacity-100 transition-all rounded-md hover:bg-white/10 group" href="{{ route('projects.create') }}" title="Add New Project">
+        <a class="flex items-center px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all group font-medium" href="{{ route('projects.create') }}" title="Add New Project">
             <img src="{{ asset('images/icons/add-project.png') }}" alt="Add New Project" class="w-5 h-5 mr-2.5 object-contain sidebar-icon shrink-0"/>
-            <span class="font-label-md text-xs sidebar-text whitespace-nowrap">Add New Project</span>
+            <span class="font-label-md text-xs sidebar-text whitespace-nowrap text-slate-300 group-hover:text-white">Add New Project</span>
         </a>
         <!-- Projects -->
-        <a class="flex items-center px-3 py-2.5 text-on-primary-container opacity-75 hover:opacity-100 transition-all rounded-md hover:bg-white/10 group" href="{{ route('projects.list') }}" title="Projects">
+        <a class="flex items-center px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all group font-medium" href="{{ route('projects.list') }}" title="Projects">
             <img src="{{ asset('images/icons/projects.png') }}" alt="Projects" class="w-5 h-5 mr-2.5 object-contain sidebar-icon shrink-0"/>
-            <span class="font-label-md text-xs sidebar-text whitespace-nowrap">Projects</span>
+            <span class="font-label-md text-xs sidebar-text whitespace-nowrap text-slate-300 group-hover:text-white">Projects</span>
         </a>
         <!-- Active Tab: Lead Tracking -->
-        <a class="flex items-center px-3 py-2.5 bg-primary-container text-white rounded-md transition-transform duration-200 ease-in-out hover:bg-primary-fixed-dim/10 font-semibold group shadow-xs" href="{{ route('leads.index') }}" title="Lead Tracking">
+        <a class="flex items-center px-3 py-2.5 bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 rounded-lg transition-all font-semibold shadow-xs group" href="{{ route('leads.index') }}" title="Lead Tracking">
             <img src="{{ asset('images/icons/leads.png') }}" alt="Lead Tracking" class="w-5 h-5 mr-2.5 object-contain sidebar-icon shrink-0"/>
-            <span class="font-label-md text-xs sidebar-text whitespace-nowrap text-cyan-300">Lead Tracking</span>
+            <span class="font-label-md text-xs sidebar-text whitespace-nowrap text-cyan-300 font-semibold">Lead Tracking</span>
         </a>
         <!-- Money Receipt -->
-        <a class="flex items-center px-3 py-2.5 text-on-primary-container opacity-75 hover:opacity-100 transition-all rounded-md hover:bg-white/10 group" href="{{ route('invoices.create') }}" title="Money Receipt">
+        <a class="flex items-center px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all group font-medium" href="{{ route('invoices.create') }}" title="Money Receipt">
             <img src="{{ asset('images/icons/receipt.png') }}" alt="Money Receipt" class="w-5 h-5 mr-2.5 object-contain sidebar-icon shrink-0"/>
-            <span class="font-label-md text-xs sidebar-text whitespace-nowrap">Money Receipt</span>
+            <span class="font-label-md text-xs sidebar-text whitespace-nowrap text-slate-300 group-hover:text-white">Money Receipt</span>
         </a>
     </nav>
 </aside>
@@ -292,8 +297,8 @@
     <!-- TopAppBar -->
     <header class="bg-surface border-b border-border-light flex flex-wrap sm:flex-nowrap justify-between items-center w-full px-4 sm:px-6 py-2 sm:h-14 shrink-0 z-10 shadow-sm gap-2">
         <div class="flex items-center space-x-3">
-            <button type="button" onclick="toggleDesktopSidebar()" class="hidden md:flex items-center justify-center p-1.5 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors" title="Collapse/Expand Sidebar">
-                <span class="material-symbols-outlined text-[20px]" id="headerCollapseIcon">menu_open</span>
+            <button type="button" onclick="toggleDesktopSidebar()" class="hidden md:flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors shadow-2xs" title="Toggle Sidebar">
+                <span class="material-symbols-outlined text-[19px]" id="headerCollapseIcon">menu_open</span>
             </button>
             <img src="{{ asset('images/icons/leads.png') }}" alt="Lead Tracking" class="w-5 h-5 object-contain shrink-0"/>
             <h2 class="font-headline-md font-bold text-base text-primary">Lead Tracking Directory</h2>
@@ -1431,7 +1436,7 @@ function setSidebarCollapsed(collapse) {
     const headerCollapseIcon = document.getElementById('headerCollapseIcon');
 
     if (collapse) {
-        sidebar.classList.remove('w-60', 'px-3');
+        sidebar.classList.remove('w-52', 'px-3');
         sidebar.classList.add('w-16', 'px-2');
         if (textGroup) textGroup.classList.add('hidden');
         if (logo) logo.classList.add('hidden');
@@ -1444,12 +1449,12 @@ function setSidebarCollapsed(collapse) {
             i.classList.remove('mr-2.5');
             i.classList.add('mx-auto');
         });
-        if (sidebarCollapseIcon) sidebarCollapseIcon.innerText = 'menu';
+        if (sidebarCollapseIcon) sidebarCollapseIcon.innerText = 'chevron_right';
         if (headerCollapseIcon) headerCollapseIcon.innerText = 'menu';
         localStorage.setItem('sidebar_collapsed', 'true');
     } else {
         sidebar.classList.remove('w-16', 'px-2');
-        sidebar.classList.add('w-60', 'px-3');
+        sidebar.classList.add('w-52', 'px-3');
         if (textGroup) textGroup.classList.remove('hidden');
         if (logo) logo.classList.remove('hidden');
         if (headerWrapper) {
@@ -1461,7 +1466,7 @@ function setSidebarCollapsed(collapse) {
             i.classList.remove('mx-auto');
             i.classList.add('mr-2.5');
         });
-        if (sidebarCollapseIcon) sidebarCollapseIcon.innerText = 'menu_open';
+        if (sidebarCollapseIcon) sidebarCollapseIcon.innerText = 'chevron_left';
         if (headerCollapseIcon) headerCollapseIcon.innerText = 'menu_open';
         localStorage.setItem('sidebar_collapsed', 'false');
     }
