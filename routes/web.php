@@ -42,5 +42,23 @@ Route::middleware('auth')->group(function () {
     Route::delete('/leads/{lead}', [LeadController::class, 'destroy'])->name('leads.destroy');
 });
 
+// One-time artisan migration runner for production (shared hosting without terminal)
+Route::get('/run-artisan-migrate', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        $migrateOutput = \Illuminate\Support\Facades\Artisan::output();
+
+        \Illuminate\Support\Facades\Artisan::call('storage:link');
+        $storageOutput = \Illuminate\Support\Facades\Artisan::output();
+
+        \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+        $optimizeOutput = \Illuminate\Support\Facades\Artisan::output();
+
+        return response("<pre style='background:#0f172a;color:#38bdf8;padding:20px;border-radius:10px;font-family:monospace;'>🚀 Migration & Storage Link Results:\n\n=== MIGRATE ===\n" . e($migrateOutput) . "\n=== STORAGE ===\n" . e($storageOutput) . "\n=== OPTIMIZE ===\n" . e($optimizeOutput) . "\n\nAll tasks completed successfully! You can now access /leads</pre>");
+    } catch (\Throwable $e) {
+        return response("<pre style='color:red;padding:20px;'>Error running migrations: " . e($e->getMessage()) . "</pre>", 500);
+    }
+});
+
 
 
