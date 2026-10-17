@@ -108,10 +108,52 @@
             outline: none;
         }
 
+        #leadsTable tbody tr.sheet-row {
+            height: 28px;
+            max-height: 28px;
+        }
+        #leadsTable tbody tr.sheet-row td {
+            height: 28px;
+            max-height: 28px;
+            padding: 0;
+            vertical-align: middle;
+        }
+        .relative-cell {
+            position: relative !important;
+            height: 28px;
+            max-height: 28px;
+            padding: 0 !important;
+        }
+
+        /* Standard Compact Cell Inputs (Name, Phone, Date, Quoted, Sold) */
+        .cell-input {
+            width: 100%;
+            height: 26px;
+            background-color: transparent;
+            border: 0;
+            padding: 3px 6px;
+            font-size: 11px;
+            color: #1e293b;
+            outline: none;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: text;
+            display: block;
+            line-height: 1.4;
+        }
+        .cell-input:focus {
+            background-color: #ffffff;
+            border: 1px solid #0284c7;
+            border-radius: 4px;
+            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+            outline: none;
+        }
+
         /* Clean In-Place Auto-Fit Textarea Cells (Niche, Note / Activity) */
         .cell-input-expand {
             width: 100%;
-            min-height: 26px;
             height: 26px;
             background-color: transparent;
             border: 1px solid transparent;
@@ -124,41 +166,51 @@
             cursor: text;
             display: block;
             line-height: 1.4;
-            white-space: pre-wrap;
-            word-break: break-word;
-            overflow-y: hidden;
-            transition: border-color 0.15s, background-color 0.15s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: border-color 0.15s, box-shadow 0.15s;
         }
         .cell-input-expand:focus {
-            background-color: #ffffff;
-            border: 1.5px solid #0284c7;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 40;
+            width: 100%;
+            min-width: 100%;
+            min-height: 52px;
+            max-height: 140px;
+            background-color: #ffffff !important;
+            border: 1.5px solid #0284c7 !important;
             border-radius: 4px;
-            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18) !important;
             outline: none;
+            white-space: pre-wrap;
+            word-break: break-word;
             overflow-y: auto;
+            padding: 4px 6px;
         }
 
         /* Clean Full Cell Yellow Status (Status) */
         .status-td {
             background-color: #fef3c7 !important; /* Soft warm yellow */
             padding: 0 !important;
-            vertical-align: top;
+            vertical-align: middle;
         }
         .cell-input-status {
             width: 100%;
-            height: 100%;
-            min-height: 26px;
+            height: 26px;
             background-color: transparent !important;
             border: 0 !important;
-            padding: 4px 6px;
+            padding: 3px 6px;
             font-size: 11px;
             color: #78350f; /* Rich amber-brown font */
             font-weight: 700;
             outline: none;
-            white-space: pre-wrap;
-            word-break: break-word;
-            resize: none;
-            cursor: text;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
             display: block;
             line-height: 1.4;
             transition: background-color 0.15s;
@@ -167,6 +219,14 @@
             background-color: #fef08a !important;
             box-shadow: inset 0 0 0 1.5px #f59e0b;
             outline: none;
+            cursor: text;
+        }
+        .cell-input-status::-webkit-calendar-picker-indicator {
+            opacity: 0.35;
+            cursor: pointer;
+        }
+        .cell-input-status:hover::-webkit-calendar-picker-indicator {
+            opacity: 0.8;
         }
     </style>
 </head>
@@ -372,9 +432,10 @@
                                 </td>
 
                                 <!-- Niche (Editable) -->
-                                <td class="p-0 border-r border-slate-200">
+                                <td class="p-0 border-r border-slate-200 relative-cell">
                                     <textarea rows="1" title="{{ $lead->niche }}" data-field="niche"
-                                              oninput="handleCellInput(this)" onblur="handleCellBlur(this)"
+                                              onfocus="handleExpandFocus(this)" onblur="handleCellBlur(this); handleExpandBlur(this)"
+                                              oninput="handleCellInput(this)"
                                               class="cell-input-expand text-slate-600">{{ $lead->niche }}</textarea>
                                 </td>
 
@@ -442,15 +503,16 @@
 
                                 <!-- Status -->
                                 <td class="p-0 border-r border-slate-200 status-td">
-                                    <textarea rows="1" title="{{ $lead->status }}" data-field="status" list="statusSuggestions"
-                                              oninput="handleCellInput(this)" onblur="handleCellBlur(this)"
-                                              class="cell-input-status">{{ $lead->status }}</textarea>
+                                    <input type="text" list="statusSuggestions" title="{{ $lead->status }}" value="{{ $lead->status }}" data-field="status"
+                                           oninput="handleCellInput(this)" onblur="handleCellBlur(this)"
+                                           class="cell-input-status"/>
                                 </td>
 
                                 <!-- Note / Activity -->
-                                <td class="p-0 border-r border-slate-200">
+                                <td class="p-0 border-r border-slate-200 relative-cell">
                                     <textarea rows="1" title="{{ $lead->note }}" data-field="note"
-                                              oninput="handleCellInput(this)" onblur="handleCellBlur(this)"
+                                              onfocus="handleExpandFocus(this)" onblur="handleCellBlur(this); handleExpandBlur(this)"
+                                              oninput="handleCellInput(this)"
                                               class="cell-input-expand text-slate-700">{{ $lead->note }}</textarea>
                                 </td>
 
@@ -500,8 +562,8 @@
                                 </td>
 
                                 <!-- Niche -->
-                                <td class="p-0 border-r border-slate-200">
-                                    <textarea rows="1" data-field="niche" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-expand text-slate-600"></textarea>
+                                <td class="p-0 border-r border-slate-200 relative-cell">
+                                    <textarea rows="1" data-field="niche" onfocus="handleExpandFocus(this)" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this); handleExpandBlur(this)" class="cell-input-expand text-slate-600"></textarea>
                                 </td>
 
                                 <!-- Contact Number -->
@@ -540,12 +602,12 @@
 
                                 <!-- Status -->
                                 <td class="p-0 border-r border-slate-200 status-td">
-                                    <textarea rows="1" data-field="status" list="statusSuggestions" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-status"></textarea>
+                                    <input type="text" list="statusSuggestions" data-field="status" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-status"/>
                                 </td>
 
                                 <!-- Note -->
-                                <td class="p-0 border-r border-slate-200">
-                                    <textarea rows="1" data-field="note" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-expand text-slate-700"></textarea>
+                                <td class="p-0 border-r border-slate-200 relative-cell">
+                                    <textarea rows="1" data-field="note" onfocus="handleExpandFocus(this)" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this); handleExpandBlur(this)" class="cell-input-expand text-slate-700"></textarea>
                                 </td>
 
                                 <!-- Actions -->
@@ -775,11 +837,25 @@ function updateRowWhatsApp(row, phone) {
     }
 }
 
-function autoResizeTextarea(el) {
+function handleExpandFocus(el) {
     if (!el || el.tagName !== 'TEXTAREA') return;
     el.style.height = 'auto';
-    const newHeight = Math.max(26, Math.min(130, el.scrollHeight));
+    const newHeight = Math.max(52, Math.min(140, el.scrollHeight + 4));
     el.style.height = newHeight + 'px';
+}
+
+function handleExpandBlur(el) {
+    if (!el || el.tagName !== 'TEXTAREA') return;
+    el.style.height = '';
+}
+
+function autoResizeTextarea(el) {
+    if (!el || el.tagName !== 'TEXTAREA') return;
+    if (document.activeElement === el) {
+        el.style.height = 'auto';
+        const newHeight = Math.max(52, Math.min(140, el.scrollHeight + 4));
+        el.style.height = newHeight + 'px';
+    }
 }
 
 // Real-time debounce auto-save for EXISTING cells
@@ -954,7 +1030,13 @@ function saveNewRowNow(row) {
             // Re-bind all cell inputs in this newly created row to existing cell handlers
             row.querySelectorAll('[data-field]').forEach(inp => {
                 inp.oninput = function() { handleCellInput(this); };
-                inp.onblur = function() { handleCellBlur(this); };
+                inp.onblur = function() { 
+                    handleCellBlur(this); 
+                    if (this.tagName === 'TEXTAREA') handleExpandBlur(this);
+                };
+                if (inp.tagName === 'TEXTAREA') {
+                    inp.onfocus = function() { handleExpandFocus(this); };
+                }
                 if (inp.tagName === 'INPUT' && inp.type === 'date') {
                     inp.onchange = function() { handleCellBlur(this); };
                 }
@@ -1071,8 +1153,8 @@ function createEmptyRowElement(nextIndex) {
         <td class="p-0 border-r border-slate-200 font-bold">
             <input type="text" data-field="client_name" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-bold text-slate-900"/>
         </td>
-        <td class="p-0 border-r border-slate-200">
-            <textarea rows="1" data-field="niche" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-expand text-slate-600"></textarea>
+        <td class="p-0 border-r border-slate-200 relative-cell">
+            <textarea rows="1" data-field="niche" onfocus="handleExpandFocus(this)" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this); handleExpandBlur(this)" class="cell-input-expand text-slate-600"></textarea>
         </td>
         <td class="p-0 border-r border-slate-200">
             <div class="flex items-center pr-1.5 contact-container">
@@ -1099,10 +1181,10 @@ function createEmptyRowElement(nextIndex) {
             <input type="text" data-field="sold_amount" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-mono font-bold text-emerald-700"/>
         </td>
         <td class="p-0 border-r border-slate-200 status-td">
-            <textarea rows="1" data-field="status" list="statusSuggestions" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-status"></textarea>
+            <input type="text" list="statusSuggestions" data-field="status" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-status"/>
         </td>
-        <td class="p-0 border-r border-slate-200">
-            <textarea rows="1" data-field="note" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-expand text-slate-700"></textarea>
+        <td class="p-0 border-r border-slate-200 relative-cell">
+            <textarea rows="1" data-field="note" onfocus="handleExpandFocus(this)" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this); handleExpandBlur(this)" class="cell-input-expand text-slate-700"></textarea>
         </td>
         <td class="py-1 px-2 text-center whitespace-nowrap actions-td">
             <span class="text-slate-300 text-xs select-none">•</span>
@@ -1408,7 +1490,6 @@ function setSidebarCollapsed(collapse) {
 
 // Restore sidebar collapse state and auto-fit textareas on page load
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('textarea.cell-input-expand').forEach(autoResizeTextarea);
     updateVisibleRowCount();
     if (localStorage.getItem('sidebar_collapsed') === 'true') {
         setSidebarCollapsed(true);
