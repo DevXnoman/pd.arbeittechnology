@@ -191,42 +191,22 @@
             padding: 4px 6px;
         }
 
-        /* Clean Full Cell Yellow Status (Status) */
+        /* Clean Full Cell Yellow Status (Status) - Identical to Note/Activity with yellow theme */
         .status-td {
             background-color: #fef3c7 !important; /* Soft warm yellow */
             padding: 0 !important;
             vertical-align: middle;
         }
-        .cell-input-status {
-            width: 100%;
-            height: 26px;
-            background-color: transparent !important;
-            border: 0 !important;
-            padding: 3px 6px;
-            font-size: 11px;
-            color: #78350f; /* Rich amber-brown font */
-            font-weight: 700;
-            outline: none;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            cursor: pointer;
-            display: block;
-            line-height: 1.4;
-            transition: background-color 0.15s;
+        .cell-input-status-expand {
+            background-color: #fef3c7 !important;
+            color: #78350f !important; /* Rich amber-brown font */
+            font-weight: 700 !important;
         }
-        .cell-input-status:focus {
-            background-color: #fef08a !important;
-            box-shadow: inset 0 0 0 1.5px #f59e0b;
-            outline: none;
-            cursor: text;
-        }
-        .cell-input-status::-webkit-calendar-picker-indicator {
-            opacity: 0.35;
-            cursor: pointer;
-        }
-        .cell-input-status:hover::-webkit-calendar-picker-indicator {
-            opacity: 0.8;
+        .cell-input-status-expand:focus {
+            background-color: #fef3c7 !important;
+            border: 1.5px solid #d97706 !important;
+            color: #78350f !important;
+            box-shadow: 0 4px 18px rgba(217, 119, 6, 0.25) !important;
         }
     </style>
 </head>
@@ -502,10 +482,11 @@
                                 </td>
 
                                 <!-- Status -->
-                                <td class="p-0 border-r border-slate-200 status-td">
-                                    <input type="text" list="statusSuggestions" title="{{ $lead->status }}" value="{{ $lead->status }}" data-field="status"
-                                           oninput="handleCellInput(this)" onblur="handleCellBlur(this)"
-                                           class="cell-input-status"/>
+                                <td class="p-0 border-r border-slate-200 relative-cell status-td">
+                                    <textarea rows="1" title="{{ $lead->status }}" data-field="status"
+                                              onfocus="handleExpandFocus(this)" onblur="handleCellBlur(this); handleExpandBlur(this)"
+                                              oninput="handleCellInput(this)"
+                                              class="cell-input-expand cell-input-status-expand">{{ $lead->status }}</textarea>
                                 </td>
 
                                 <!-- Note / Activity -->
@@ -601,8 +582,8 @@
                                 </td>
 
                                 <!-- Status -->
-                                <td class="p-0 border-r border-slate-200 status-td">
-                                    <input type="text" list="statusSuggestions" data-field="status" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-status"/>
+                                <td class="p-0 border-r border-slate-200 relative-cell status-td">
+                                    <textarea rows="1" data-field="status" onfocus="handleExpandFocus(this)" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this); handleExpandBlur(this)" class="cell-input-expand cell-input-status-expand"></textarea>
                                 </td>
 
                                 <!-- Note -->
@@ -1180,8 +1161,8 @@ function createEmptyRowElement(nextIndex) {
         <td class="p-0 border-r border-slate-200">
             <input type="text" data-field="sold_amount" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-mono font-bold text-emerald-700"/>
         </td>
-        <td class="p-0 border-r border-slate-200 status-td">
-            <input type="text" list="statusSuggestions" data-field="status" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-status"/>
+        <td class="p-0 border-r border-slate-200 relative-cell status-td">
+            <textarea rows="1" data-field="status" onfocus="handleExpandFocus(this)" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this); handleExpandBlur(this)" class="cell-input-expand cell-input-status-expand"></textarea>
         </td>
         <td class="p-0 border-r border-slate-200 relative-cell">
             <textarea rows="1" data-field="note" onfocus="handleExpandFocus(this)" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this); handleExpandBlur(this)" class="cell-input-expand text-slate-700"></textarea>
