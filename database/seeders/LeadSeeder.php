@@ -1,0 +1,217 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\Lead;
+
+class LeadSeeder extends Seeder
+{
+    public function run(): void
+    {
+        // Clean delete existing entries
+        Lead::query()->delete();
+
+        $campaignTab = 'August 2026 (2nd Ad)';
+
+        $leads = [
+            [
+                'client_name' => 'MD Kefayet Ullah Sumon',
+                'niche' => null,
+                'contact_number' => '01980393098',
+                'work_scope' => ['MERN'],
+                'lead_incoming_date' => '2026-08-26',
+                'quoted_amount' => '৳115,000',
+                'sold_amount' => null,
+                'status' => 'Quotation deya hoise',
+                'note' => 'Quotation deya hoise',
+                'campaign_month' => $campaignTab,
+            ],
+            [
+                'client_name' => 'Jagoroni News',
+                'niche' => null,
+                'contact_number' => '01772102992',
+                'work_scope' => [],
+                'lead_incoming_date' => '2026-08-28',
+                'quoted_amount' => null,
+                'sold_amount' => null,
+                'status' => 'Mirpur office visit',
+                'note' => 'Mirpur office e jeye kotha bolte hobe',
+                'campaign_month' => $campaignTab,
+            ],
+            [
+                'client_name' => 'Heli Flight',
+                'niche' => null,
+                'contact_number' => '01915653010',
+                'work_scope' => [],
+                'lead_incoming_date' => '2026-08-28',
+                'quoted_amount' => null,
+                'sold_amount' => null,
+                'status' => 'Visiting card sent',
+                'note' => 'Office er visiting card location deya hoise. Akbor kotha bolse',
+                'campaign_month' => $campaignTab,
+            ],
+            [
+                'client_name' => 'Faruq',
+                'niche' => null,
+                'contact_number' => '01611015565',
+                'work_scope' => [],
+                'lead_incoming_date' => '2026-08-30',
+                'quoted_amount' => null,
+                'sold_amount' => null,
+                'status' => 'Call pending',
+                'note' => 'Whats app e reply dei nai active nai, mobile number e call dite hobe',
+                'campaign_month' => $campaignTab,
+            ],
+            [
+                'client_name' => 'Nazmul Islam',
+                'niche' => null,
+                'contact_number' => '01619593949',
+                'work_scope' => [],
+                'lead_incoming_date' => '2026-08-30',
+                'quoted_amount' => null,
+                'sold_amount' => null,
+                'status' => 'Requirements checked',
+                'note' => '1400-1500 takay e-commerce landing page lagbe. Domain Hosting dite parbe na. Onno page er Ad er offer dekhe asche',
+                'campaign_month' => $campaignTab,
+            ],
+            [
+                'client_name' => 'Mahmud Hasan',
+                'niche' => 'E-commerce Multi Category',
+                'contact_number' => '01755555888',
+                'work_scope' => ['MERN', 'Laravel'],
+                'lead_incoming_date' => '2026-08-30',
+                'quoted_amount' => '20000-25000',
+                'sold_amount' => null,
+                'status' => 'Quotation deya hoise',
+                'note' => 'Quotation deya hoise',
+                'campaign_month' => $campaignTab,
+            ],
+            [
+                'client_name' => 'Arif',
+                'niche' => 'E-commerce Multi Category',
+                'contact_number' => '01303388413',
+                'work_scope' => ['MERN', 'Laravel'],
+                'lead_incoming_date' => '2026-08-30',
+                'quoted_amount' => '20000-25000',
+                'sold_amount' => null,
+                'status' => 'Quotation deya hoise',
+                'note' => 'Quotation deya hoise, Kodomtoly thake, office e sesh call dile dekha korbe',
+                'campaign_month' => $campaignTab,
+            ],
+            [
+                'client_name' => 'HH Pavel',
+                'niche' => null,
+                'contact_number' => '01792437458',
+                'work_scope' => [],
+                'lead_incoming_date' => '2026-08-31',
+                'quoted_amount' => null,
+                'sold_amount' => null,
+                'status' => 'Kotha hoy nai',
+                'note' => 'Kotha hoy nai',
+                'campaign_month' => $campaignTab,
+            ],
+            [
+                'client_name' => 'Jewel',
+                'niche' => null,
+                'contact_number' => '01784111413',
+                'work_scope' => [],
+                'lead_incoming_date' => '2026-08-31',
+                'quoted_amount' => null,
+                'sold_amount' => null,
+                'status' => 'Kotha hoy nai',
+                'note' => 'Kotha hoy nai',
+                'campaign_month' => $campaignTab,
+            ],
+            [
+                'client_name' => 'Noor Architecture',
+                'niche' => 'Portfolio Website',
+                'contact_number' => '01865358700',
+                'work_scope' => ['WordPress'],
+                'lead_incoming_date' => '2026-09-01',
+                'quoted_amount' => '৳20,000',
+                'sold_amount' => null,
+                'status' => 'Office e ashbe',
+                'note' => 'Office e ashbe',
+                'campaign_month' => $campaignTab,
+            ],
+            [
+                'client_name' => 'Laboratory Equipment',
+                'niche' => 'Portfolio Website',
+                'contact_number' => '01648438915',
+                'work_scope' => ['WordPress', 'Laravel'],
+                'lead_incoming_date' => '2026-09-01',
+                'quoted_amount' => '20000-30000',
+                'sold_amount' => null,
+                'status' => 'Live meeting done',
+                'note' => 'Ali Akbor live meeting koreche',
+                'campaign_month' => $campaignTab,
+            ],
+            [
+                'client_name' => 'Elizabeth',
+                'niche' => null,
+                'contact_number' => '(+1(945) 384-9650)',
+                'work_scope' => [],
+                'lead_incoming_date' => '2026-09-01',
+                'quoted_amount' => null,
+                'sold_amount' => null,
+                'status' => 'Contacted',
+                'note' => null,
+                'campaign_month' => $campaignTab,
+            ],
+            [
+                'client_name' => 'Kayser Ahmed',
+                'niche' => 'Multivendor',
+                'contact_number' => '01684169544',
+                'work_scope' => [],
+                'lead_incoming_date' => '2026-09-01',
+                'quoted_amount' => null,
+                'sold_amount' => null,
+                'status' => 'Message sent',
+                'note' => 'Call recieve kore nai, message deya hoise',
+                'campaign_month' => $campaignTab,
+            ],
+            [
+                'client_name' => 'Guru deb',
+                'niche' => 'Jwellery website',
+                'contact_number' => '01810019392',
+                'work_scope' => ['Laravel'],
+                'lead_incoming_date' => '2026-09-01',
+                'quoted_amount' => null,
+                'sold_amount' => null,
+                'status' => 'Followup pending',
+                'note' => 'Followup korte hobe',
+                'campaign_month' => $campaignTab,
+            ],
+            // Additional Month Tabs
+            [
+                'client_name' => 'Standard Tech Corp',
+                'niche' => 'Enterprise SaaS',
+                'contact_number' => '01711223344',
+                'work_scope' => ['Laravel', 'React'],
+                'lead_incoming_date' => '2026-08-15',
+                'quoted_amount' => '৳50,000',
+                'sold_amount' => '৳48,000',
+                'status' => 'Won (Converted to Project)',
+                'note' => 'Agreed on 48k. Project initialized.',
+                'campaign_month' => 'August 2026',
+            ],
+            [
+                'client_name' => 'Fashion House BD',
+                'niche' => 'E-commerce',
+                'contact_number' => '01911998877',
+                'work_scope' => ['WordPress'],
+                'lead_incoming_date' => '2026-06-10',
+                'quoted_amount' => '৳18,000',
+                'sold_amount' => '৳18,000',
+                'status' => 'Completed',
+                'note' => 'Old June lead closed successfully.',
+                'campaign_month' => 'June 2026',
+            ]
+        ];
+
+        foreach ($leads as $data) {
+            Lead::create($data);
+        }
+    }
+}
