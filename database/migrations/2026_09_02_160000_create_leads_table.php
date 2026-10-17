@@ -15,10 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('client_name');
             $table->string('niche')->nullable();
-            $table->string('contact_number');
+            $table->string('contact_number')->nullable();
             $table->string('email')->nullable();
             $table->json('work_scope')->nullable(); // Multi-select tags e.g. ["MERN", "Laravel", "WordPress"]
-            $table->date('lead_incoming_date');
+            $table->date('lead_incoming_date')->nullable();
             $table->string('quoted_amount')->nullable(); // String to support ranges like "20000-25000" or "৳115,000"
             $table->string('sold_amount')->nullable();
             $table->string('status')->default('New Lead'); // Manually typed status string

@@ -64,6 +64,24 @@
         td {
             position: relative;
         }
+        /* True Google Sheets Crisp Gridlines */
+        #leadsTable {
+            border-collapse: collapse !important;
+            border: 1px solid #cbd5e1 !important;
+            width: 100%;
+        }
+        #leadsTable th, 
+        #leadsTable td {
+            border: 1px solid #cbd5e1 !important;
+        }
+        #leadsTable thead th {
+            background-color: #f1f5f9 !important;
+            border-bottom: 2px solid #94a3b8 !important;
+            font-weight: 700;
+        }
+        #leadsTable tbody tr.sheet-row:hover td {
+            background-color: #f8fafc;
+        }
         /* Standard Compact Cell Inputs (Name, Phone, Date, Quoted, Sold) */
         .cell-input {
             width: 100%;
@@ -299,7 +317,7 @@
                     <span>All Leads</span>
                 </a>
 
-                @forelse($campaigns as $campaign)
+                @foreach($campaigns as $campaign)
                     <a href="{{ route('leads.index', array_merge(request()->except('page'), ['campaign' => $campaign])) }}"
                        class="px-3.5 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap flex items-center space-x-1.5 {{ $selectedCampaign === $campaign ? 'bg-secondary text-white shadow-sm' : 'bg-slate-50 text-slate-700 hover:bg-slate-200 border border-slate-200' }}">
                         <span class="material-symbols-outlined text-[15px]">campaign</span>
@@ -308,9 +326,13 @@
                             <span class="px-1.5 py-0.2 bg-emerald-400 text-slate-900 text-[9px] font-black rounded uppercase tracking-wider">Latest</span>
                         @endif
                     </a>
-                @empty
-                    <span class="text-xs text-slate-400 italic px-3 py-1">No campaign tabs yet. Type in the empty row below to start!</span>
-                @endforelse
+                @endforeach
+
+                <!-- + Add Tab Button (Google Sheets Style) -->
+                <button type="button" onclick="openNewTabModal()" class="px-2.5 py-1.5 rounded-md text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-dashed border-slate-300 transition-all whitespace-nowrap flex items-center space-x-1 cursor-pointer" title="Add New Month or Ad Campaign Tab">
+                    <span class="material-symbols-outlined text-[16px]">add</span>
+                    <span>New Tab</span>
+                </button>
             </div>
 
             <div class="flex items-center space-x-2 text-xs text-slate-500 font-medium shrink-0 px-2">
@@ -409,7 +431,7 @@
 
                                 <!-- Incoming Date -->
                                 <td class="p-0 border-r border-slate-200">
-                                    <input type="date" value="{{ \Carbon\Carbon::parse($lead->lead_incoming_date)->format('Y-m-d') }}" data-field="lead_incoming_date"
+                                    <input type="date" value="{{ $lead->lead_incoming_date ? \Carbon\Carbon::parse($lead->lead_incoming_date)->format('Y-m-d') : '' }}" data-field="lead_incoming_date"
                                            onchange="handleCellBlur(this)"
                                            class="cell-input font-mono text-slate-600"/>
                                 </td>
@@ -513,7 +535,7 @@
 
                                 <!-- Incoming Date -->
                                 <td class="p-0 border-r border-slate-200">
-                                    <input type="date" data-field="lead_incoming_date" value="{{ date('Y-m-d') }}" onchange="handleNewRowBlur(this)" class="cell-input font-mono text-slate-600"/>
+                                    <input type="date" data-field="lead_incoming_date" value="" onchange="handleNewRowBlur(this)" class="cell-input font-mono text-slate-600"/>
                                 </td>
 
                                 <!-- Quoted Amount -->
@@ -621,6 +643,34 @@
             <div class="flex justify-end space-x-2 pt-2">
                 <button type="button" onclick="closeImportModal()" class="px-3 py-1.5 bg-slate-100 text-slate-700 text-xs font-semibold rounded hover:bg-slate-200">Cancel</button>
                 <button type="submit" class="px-4 py-1.5 bg-secondary text-white text-xs font-bold rounded hover:bg-cyan-700 shadow-sm">Start Import</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Create New Tab Modal (Google Sheets Style) -->
+<div id="newTabModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl border border-slate-200 max-w-sm w-full p-5 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+            <h3 class="font-headline-md font-bold text-slate-900 text-sm flex items-center">
+                <span class="material-symbols-outlined text-secondary mr-2 text-[20px]">tab</span>
+                Create Month / Campaign Tab
+            </h3>
+            <button type="button" onclick="closeNewTabModal()" class="text-slate-400 hover:text-slate-600">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <form onsubmit="handleCreateTabSubmit(event)" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Tab Name (Month or Ad Campaign)</label>
+                <input type="text" id="newTabNameInput" required placeholder="e.g. November 2026, Facebook Ad - Dental" class="w-full px-3 py-2 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-secondary outline-none"/>
+                <p class="text-[11px] text-slate-400 mt-1">This will open a dedicated sheet tab for this month or ad campaign.</p>
+            </div>
+
+            <div class="flex justify-end space-x-2 pt-2">
+                <button type="button" onclick="closeNewTabModal()" class="px-3 py-1.5 bg-slate-100 text-slate-700 text-xs font-semibold rounded hover:bg-slate-200">Cancel</button>
+                <button type="submit" class="px-4 py-1.5 bg-secondary text-white text-xs font-bold rounded hover:bg-cyan-700 shadow-sm">Open Tab</button>
             </div>
         </form>
     </div>
@@ -822,7 +872,7 @@ function saveNewRowNow(row) {
         niche: niche,
         contact_number: contact,
         work_scope: scopes,
-        lead_incoming_date: date || new Date().toISOString().split('T')[0],
+        lead_incoming_date: date || null,
         quoted_amount: quoted,
         sold_amount: sold,
         status: status || 'New Lead',
@@ -981,7 +1031,7 @@ function ensureEmptyRowsBuffer() {
                     </div>
                 </td>
                 <td class="p-0 border-r border-slate-200">
-                    <input type="date" data-field="lead_incoming_date" value="${new Date().toISOString().split('T')[0]}" onchange="handleNewRowBlur(this)" class="cell-input font-mono text-slate-600"/>
+                    <input type="date" data-field="lead_incoming_date" value="" onchange="handleNewRowBlur(this)" class="cell-input font-mono text-slate-600"/>
                 </td>
                 <td class="p-0 border-r border-slate-200">
                     <input type="text" data-field="quoted_amount" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-mono font-bold text-slate-900"/>
@@ -1276,6 +1326,27 @@ function openImportModal() {
 
 function closeImportModal() {
     document.getElementById('importModal').classList.add('hidden');
+}
+
+function openNewTabModal() {
+    const modal = document.getElementById('newTabModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        setTimeout(() => document.getElementById('newTabNameInput')?.focus(), 50);
+    }
+}
+
+function closeNewTabModal() {
+    const modal = document.getElementById('newTabModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function handleCreateTabSubmit(event) {
+    event.preventDefault();
+    const input = document.getElementById('newTabNameInput');
+    const name = (input ? input.value : '').trim();
+    if (!name) return;
+    window.location.href = `{{ route('leads.index') }}?campaign=${encodeURIComponent(name)}`;
 }
 </script>
 

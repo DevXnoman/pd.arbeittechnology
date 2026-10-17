@@ -15,15 +15,29 @@ class LeadController extends Controller
     {
         // Get all distinct campaign months ordered by most recent lead incoming date or created_at
         $campaigns = Lead::select('campaign_month', DB::raw('MAX(lead_incoming_date) as max_date'))
+            ->whereNotNull('campaign_month')
+            ->where('campaign_month', '!=', '')
             ->groupBy('campaign_month')
             ->orderBy('max_date', 'desc')
             ->pluck('campaign_month')
             ->toArray();
 
+        $currentMonth = date('F Y');
+        if (empty($campaigns)) {
+            $campaigns = [$currentMonth];
+        } elseif (!in_array($currentMonth, $campaigns)) {
+            array_unshift($campaigns, $currentMonth);
+        }
+
         // Default to most recent campaign tab if not specified
         $selectedCampaign = $request->input('campaign');
-        if (!$selectedCampaign && !empty($campaigns)) {
-            $selectedCampaign = $campaigns[0];
+        if (!$selectedCampaign) {
+            $selectedCampaign = $campaigns[0] ?? $currentMonth;
+        }
+
+        // If user switched to or created a new campaign tab, ensure it appears in the tabs list
+        if ($selectedCampaign && $selectedCampaign !== 'all' && !in_array($selectedCampaign, $campaigns)) {
+            $campaigns[] = $selectedCampaign;
         }
 
         $query = Lead::with('notes');
@@ -99,14 +113,27 @@ class LeadController extends Controller
         if (empty($validated['client_name'])) {
             $validated['client_name'] = 'New Client';
         }
+        if ($validated['campaign_month'] === 'all') {
+            $validated['campaign_month'] = date('F Y');
+        }
         if (empty($validated['lead_incoming_date'])) {
-            $validated['lead_incoming_date'] = now()->toDateString();
+            $validated['lead_incoming_date'] = null;
         }
         if (empty($validated['status'])) {
             $validated['status'] = 'New Lead';
         }
 
-        $lead = Lead::create($validated);
+        try {
+            $lead = Lead::create($validated);
+        } catch (\Exception $e) {
+            // Fallback if MySQL column has not yet been changed to nullable
+            if (str_contains($e->getMessage(), 'lead_incoming_date')) {
+                $validated['lead_incoming_date'] = now()->toDateString();
+                $lead = Lead::create($validated);
+            } else {
+                throw $e;
+            }
+        }
 
         if (!empty($validated['note'])) {
             LeadNote::create([
