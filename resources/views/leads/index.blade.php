@@ -780,7 +780,11 @@ function handleCellBlur(input) {
 
 function saveExistingFieldNow(leadId, fieldName, fieldValue, row) {
     const data = {};
-    data[fieldName] = fieldValue;
+    if (fieldName === 'lead_incoming_date') {
+        data[fieldName] = fieldValue ? fieldValue : null;
+    } else {
+        data[fieldName] = fieldValue;
+    }
 
     fetch(`/leads/${leadId}/quick-update`, {
         method: 'PATCH',
@@ -791,14 +795,15 @@ function saveExistingFieldNow(leadId, fieldName, fieldValue, row) {
         },
         body: JSON.stringify(data)
     })
-    .then(res => res.json())
-    .then(resData => {
-        if (resData.success) {
+    .then(async res => {
+        const resData = await res.json().catch(() => ({}));
+        if (res.ok && resData.success) {
             setCloudSyncStatus('saved');
             if (fieldName === 'contact_number' && row) {
                 updateRowWhatsApp(row, fieldValue);
             }
         } else {
+            console.error("Save existing field error:", resData);
             setCloudSyncStatus('error');
         }
     })
@@ -859,8 +864,9 @@ function saveNewRowNow(row) {
         scopes = JSON.parse(row.dataset.scopes || '[]');
     } catch(e) { scopes = []; }
 
-    // If row is completely empty, don't create lead
+    // If row is completely empty, reset status and don't create lead
     if (!clientName && !niche && !contact && !quoted && !sold && !status && !note && scopes.length === 0) {
+        setCloudSyncStatus('saved');
         return;
     }
 
@@ -872,7 +878,7 @@ function saveNewRowNow(row) {
         niche: niche,
         contact_number: contact,
         work_scope: scopes,
-        lead_incoming_date: date || null,
+        lead_incoming_date: date ? date : null,
         quoted_amount: quoted,
         sold_amount: sold,
         status: status || 'New Lead',
@@ -889,12 +895,21 @@ function saveNewRowNow(row) {
         },
         body: JSON.stringify(payload)
     })
-    .then(res => res.json())
-    .then(data => {
+    .then(async res => {
+        const data = await res.json().catch(() => ({}));
         row.dataset.isSaving = 'false';
-        if (data.success && data.lead) {
+        if (res.ok && data.success && data.lead) {
             const lead = data.lead;
             row.setAttribute('data-lead-id', lead.id);
+
+            // Re-bind all cell inputs in this newly created row to existing cell handlers
+            row.querySelectorAll('[data-field]').forEach(inp => {
+                inp.oninput = function() { handleCellInput(this); };
+                inp.onblur = function() { handleCellBlur(this); };
+                if (inp.tagName === 'INPUT' && inp.type === 'date') {
+                    inp.onchange = function() { handleCellBlur(this); };
+                }
+            });
 
             // Update WhatsApp icon
             if (contact) {
@@ -934,6 +949,7 @@ function saveNewRowNow(row) {
             // Ensure we always have empty rows below
             ensureEmptyRowsBuffer();
         } else {
+            console.error("Save new row error response:", data);
             setCloudSyncStatus('error');
         }
     })

@@ -59,7 +59,7 @@ class LeadController extends Controller
             });
         }
 
-        $leads = $query->orderBy('lead_incoming_date', 'asc')->orderBy('id', 'asc')->get();
+        $leads = $query->orderBy('id', 'asc')->get();
 
         // Calculate KPI Metrics for selected view
         $metricsQuery = Lead::query();
@@ -186,37 +186,61 @@ class LeadController extends Controller
 
     public function quickUpdate(Request $request, Lead $lead)
     {
-        $validated = $request->validate([
-            'client_name' => 'nullable|string|max:255',
-            'niche' => 'nullable|string|max:255',
-            'contact_number' => 'nullable|string|max:255',
-            'work_scope' => 'nullable|array',
-            'lead_incoming_date' => 'nullable|date',
-            'status' => 'nullable|string|max:255',
-            'note' => 'nullable|string',
-            'quoted_amount' => 'nullable|string|max:255',
-            'sold_amount' => 'nullable|string|max:255',
-        ]);
-
-        if ($request->has('work_scope')) {
-            $validated['work_scope'] = is_array($request->work_scope) ? array_values(array_filter($request->work_scope)) : [];
-        }
-
-        $lead->update($validated);
-
-        if (array_key_exists('note', $validated) && !empty($validated['note'])) {
-            LeadNote::create([
-                'lead_id' => $lead->id,
-                'note_content' => 'Note updated: ' . $validated['note'],
-                'logged_by' => Auth::user()->name ?? 'System',
+        try {
+            $validated = $request->validate([
+                'client_name' => 'nullable|string|max:255',
+                'niche' => 'nullable|string|max:255',
+                'contact_number' => 'nullable|string|max:255',
+                'work_scope' => 'nullable|array',
+                'lead_incoming_date' => 'nullable|date',
+                'status' => 'nullable|string|max:255',
+                'note' => 'nullable|string',
+                'quoted_amount' => 'nullable|string|max:255',
+                'sold_amount' => 'nullable|string|max:255',
             ]);
-        }
 
-        if ($request->wantsJson()) {
-            return response()->json(['success' => true, 'lead' => $lead]);
-        }
+            if ($request->has('work_scope')) {
+                $validated['work_scope'] = is_array($request->work_scope) ? array_values(array_filter($request->work_scope)) : [];
+            }
 
-        return redirect()->back()->with('success', 'Row updated successfully!');
+            if (array_key_exists('lead_incoming_date', $validated)) {
+                if (empty($validated['lead_incoming_date'])) {
+                    $validated['lead_incoming_date'] = null;
+                }
+            }
+
+            try {
+                $lead->update($validated);
+            } catch (\Exception $e) {
+                // In case the column in MySQL is not nullable yet
+                if (str_contains($e->getMessage(), 'lead_incoming_date')) {
+                    $validated['lead_incoming_date'] = now()->toDateString();
+                    $lead->update($validated);
+                } else {
+                    throw $e;
+                }
+            }
+
+            if (array_key_exists('note', $validated) && !empty($validated['note'])) {
+                LeadNote::create([
+                    'lead_id' => $lead->id,
+                    'note_content' => 'Note updated: ' . $validated['note'],
+                    'logged_by' => Auth::user()->name ?? 'System',
+                ]);
+            }
+
+            if ($request->wantsJson()) {
+                return response()->json(['success' => true, 'lead' => $lead]);
+            }
+
+            return redirect()->back()->with('success', 'Row updated successfully!');
+        } catch (\Throwable $e) {
+            \Log::error('quickUpdate error: ' . $e->getMessage());
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'error' => $e->getMessage()], 422);
+            }
+            return redirect()->back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 
     public function addNote(Request $request, Lead $lead)
