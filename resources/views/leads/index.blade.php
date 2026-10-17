@@ -138,32 +138,34 @@
             overflow-y: auto;
         }
 
-        /* Clean In-Place Status Cell (Status) */
+        /* Clean Full Cell Yellow Status (Status) */
+        .status-td {
+            background-color: #fef3c7 !important; /* Soft warm yellow */
+            padding: 0 !important;
+            vertical-align: top;
+        }
         .cell-input-status {
             width: 100%;
-            height: 26px;
-            background-color: rgba(254, 243, 199, 0.8);
-            border: 1px solid #fde68a;
-            padding: 2px 6px;
+            height: 100%;
+            min-height: 26px;
+            background-color: transparent !important;
+            border: 0 !important;
+            padding: 4px 6px;
             font-size: 11px;
-            color: #0f172a;
-            border-radius: 4px;
-            font-weight: 600;
+            color: #78350f; /* Rich amber-brown font */
+            font-weight: 700;
             outline: none;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            white-space: pre-wrap;
+            word-break: break-word;
             resize: none;
             cursor: text;
             display: block;
             line-height: 1.4;
-            transition: border-color 0.15s, background-color 0.15s;
+            transition: background-color 0.15s;
         }
         .cell-input-status:focus {
-            background-color: #ffffff;
-            border: 1.5px solid #f59e0b;
-            border-radius: 4px;
-            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+            background-color: #fef08a !important;
+            box-shadow: inset 0 0 0 1.5px #f59e0b;
             outline: none;
         }
     </style>
@@ -426,7 +428,7 @@
                                 </td>
 
                                 <!-- Status -->
-                                <td class="p-1 border-r border-slate-200">
+                                <td class="p-0 border-r border-slate-200 status-td">
                                     <textarea rows="1" title="{{ $lead->status }}" data-field="status" list="statusSuggestions"
                                               oninput="handleCellInput(this)" onblur="handleCellBlur(this)"
                                               class="cell-input-status">{{ $lead->status }}</textarea>
@@ -524,7 +526,7 @@
                                 </td>
 
                                 <!-- Status -->
-                                <td class="p-1 border-r border-slate-200">
+                                <td class="p-0 border-r border-slate-200 status-td">
                                     <textarea rows="1" data-field="status" list="statusSuggestions" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-status"></textarea>
                                 </td>
 
@@ -1043,7 +1045,7 @@ function ensureEmptyRowsBuffer() {
                 <td class="p-0 border-r border-slate-200">
                     <input type="text" data-field="sold_amount" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input font-mono font-bold text-emerald-700"/>
                 </td>
-                <td class="p-1 border-r border-slate-200">
+                <td class="p-0 border-r border-slate-200 status-td">
                     <textarea rows="1" data-field="status" list="statusSuggestions" oninput="handleNewRowInput(this)" onblur="handleNewRowBlur(this)" class="cell-input-status"></textarea>
                 </td>
                 <td class="p-0 border-r border-slate-200">
