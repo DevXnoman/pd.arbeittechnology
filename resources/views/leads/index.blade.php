@@ -9,6 +9,12 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=DM+Sans:wght@600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="{{ asset('js/xlsx.full.min.js') }}"></script>
+    <script>
+        if (typeof XLSX === 'undefined') {
+            document.write('<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"><\/script>');
+        }
+    </script>
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -238,8 +244,8 @@
 <div id="mobileBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden md:hidden transition-opacity"></div>
 
 <!-- SideNavBar Drawer -->
-<aside id="sidebar" class="relative fixed md:static inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-all duration-300 ease-in-out flex flex-col bg-slate-900 text-white h-full w-52 border-r border-slate-800 shadow-xl md:shadow-none py-6 px-3 space-y-1.5 z-50 md:z-20 shrink-0">
-    <!-- Floating Edge Collapse/Expand Toggle Button (Desktop) -->
+<aside id="sidebar" class="fixed md:relative inset-y-0 left-0 md:inset-auto transform -translate-x-full md:translate-x-0 transition-all duration-300 ease-in-out flex flex-col bg-slate-900 text-white h-full w-52 border-r border-slate-800 shadow-xl md:shadow-none py-6 px-3 space-y-1.5 z-50 md:z-20 shrink-0">
+    <!-- Floating Edge Collapse/Expand Toggle Button (Desktop Only) -->
     <button type="button" 
             onclick="toggleDesktopSidebar()" 
             id="desktopCollapseBtn"
@@ -253,10 +259,6 @@
             <div class="bg-white rounded-xl p-2 flex items-center justify-center w-full min-w-0 shadow-sm sidebar-logo transition-all">
                 <img class="h-11 w-auto max-w-full object-contain" src="{{ asset('images/logo.png') }}" alt="Logo"/>
             </div>
-            <!-- Mobile Close Button -->
-            <button type="button" onclick="toggleMobileSidebar()" class="md:hidden text-white/70 hover:text-white p-1 ml-1.5 shrink-0">
-                <span class="material-symbols-outlined text-[20px]">close</span>
-            </button>
         </div>
         <div class="min-w-0 sidebar-text-group transition-all">
             <h1 class="font-headline-md text-xs font-bold text-cyan-400 leading-snug">Lead & Project Management System</h1>
@@ -283,6 +285,11 @@
             <img src="{{ asset('images/icons/leads.png') }}" alt="Lead Tracking" class="w-5 h-5 mr-2.5 object-contain sidebar-icon shrink-0"/>
             <span class="font-label-md text-xs sidebar-text whitespace-nowrap text-cyan-300 font-semibold">Lead Tracking</span>
         </a>
+        <!-- Accounts & Finance -->
+        <a class="flex items-center px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all group font-medium" href="{{ route('accounts.index') }}" title="Accounts & Finance">
+            <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-cyan-400 mr-2.5 sidebar-icon shrink-0">account_balance_wallet</span>
+            <span class="font-label-md text-xs sidebar-text whitespace-nowrap text-slate-300 group-hover:text-white">Accounts</span>
+        </a>
         <!-- Money Receipt -->
         <a class="flex items-center px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all group font-medium" href="{{ route('invoices.create') }}" title="Money Receipt">
             <img src="{{ asset('images/icons/receipt.png') }}" alt="Money Receipt" class="w-5 h-5 mr-2.5 object-contain sidebar-icon shrink-0"/>
@@ -292,7 +299,7 @@
 </aside>
 
 <!-- Main Content Area -->
-<main class="flex-1 flex flex-col h-full overflow-hidden bg-surface-subtle">
+<main class="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden bg-surface-subtle">
 
     <!-- TopAppBar -->
     <header class="bg-surface border-b border-border-light flex flex-wrap sm:flex-nowrap justify-between items-center w-full px-4 sm:px-6 py-2 sm:h-14 shrink-0 z-10 shadow-sm gap-2">
@@ -315,10 +322,10 @@
                 <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[16px]">search</span>
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Search client, phone, niche..." class="w-full pl-8 pr-3 py-1.5 bg-surface-subtle border border-border-light rounded-md text-xs focus:ring-1 focus:ring-secondary focus:border-secondary outline-none"/>
             </form>
-            <!-- CSV Import Button -->
-            <button onclick="openImportModal()" type="button" class="inline-flex items-center px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-md border border-slate-300 transition-colors shadow-2xs">
-                <span class="material-symbols-outlined text-[16px] mr-1">upload_file</span>
-                Import CSV
+            <!-- Export to Excel Button -->
+            <button onclick="exportLeadsToExcel()" type="button" id="exportExcelBtn" class="inline-flex items-center px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold rounded-md shadow-2xs transition-colors cursor-pointer space-x-1.5" title="Export all leads from current tab to Excel (.xlsx)">
+                <span class="material-symbols-outlined text-[16px]">download</span>
+                <span>Export Excel</span>
             </button>
         </div>
     </header>
@@ -402,6 +409,7 @@
                             @endphp
                             <tr class="sheet-row hover:bg-slate-50/80 transition-colors {{ $lead->project_id ? 'bg-emerald-50/40' : '' }}" 
                                 data-lead-id="{{ $lead->id }}" 
+                                data-campaign="{{ $lead->campaign_month }}"
                                 data-scopes='@json($currentScopes)'>
                                 <!-- Index -->
                                 <td class="py-1 px-2 border-r border-slate-200 text-center font-mono text-slate-400 font-semibold text-[11px] select-none bg-slate-50/60 row-index-cell">
@@ -758,6 +766,7 @@
 
 <script>
 const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+const SELECTED_TAB = "{{ $selectedCampaign }}";
 const CURRENT_CAMPAIGN = "{{ $selectedCampaign !== 'all' ? $selectedCampaign : ($campaigns[0] ?? date('F Y')) }}";
 
 let newRowScopes = [];
@@ -1413,18 +1422,41 @@ document.addEventListener('keydown', function(e) {
 });
 
 function toggleMobileSidebar() {
-    document.getElementById('sidebar').classList.toggle('-translate-x-full');
-    document.getElementById('mobileBackdrop').classList.toggle('hidden');
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('mobileBackdrop');
+    if (!sidebar) return;
+    const isHidden = sidebar.classList.contains('-translate-x-full');
+    if (isHidden) {
+        sidebar.classList.remove('-translate-x-full');
+        if (window.innerWidth < 768) {
+            setSidebarCollapsed(false, false);
+        }
+        if (backdrop) backdrop.classList.remove('hidden');
+    } else {
+        sidebar.classList.add('-translate-x-full');
+        if (backdrop) backdrop.classList.add('hidden');
+    }
 }
 
 function toggleDesktopSidebar() {
     const sidebar = document.getElementById('sidebar');
-    const isCollapsed = sidebar.classList.contains('w-16');
-    setSidebarCollapsed(!isCollapsed);
+    if (!sidebar) return;
+
+    if (window.innerWidth < 768) {
+        // On mobile: collapse button slides drawer away
+        sidebar.classList.add('-translate-x-full');
+        const backdrop = document.getElementById('mobileBackdrop');
+        if (backdrop) backdrop.classList.add('hidden');
+    } else {
+        // On desktop: toggle rail
+        const isCollapsed = sidebar.classList.contains('w-16');
+        setSidebarCollapsed(!isCollapsed, true);
+    }
 }
 
-function setSidebarCollapsed(collapse) {
+function setSidebarCollapsed(collapse, saveToStorage = true) {
     const sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
     const textGroup = sidebar.querySelector('.sidebar-text-group');
     const logo = sidebar.querySelector('.sidebar-logo');
     const headerWrapper = sidebar.querySelector('.sidebar-header-wrapper');
@@ -1449,7 +1481,9 @@ function setSidebarCollapsed(collapse) {
         });
         if (sidebarCollapseIcon) sidebarCollapseIcon.innerText = 'chevron_right';
         if (headerCollapseIcon) headerCollapseIcon.innerText = 'menu';
-        localStorage.setItem('sidebar_collapsed', 'true');
+        if (saveToStorage && window.innerWidth >= 768) {
+            localStorage.setItem('sidebar_collapsed', 'true');
+        }
     } else {
         sidebar.classList.remove('w-16', 'px-2');
         sidebar.classList.add('w-52', 'px-3');
@@ -1466,15 +1500,17 @@ function setSidebarCollapsed(collapse) {
         });
         if (sidebarCollapseIcon) sidebarCollapseIcon.innerText = 'chevron_left';
         if (headerCollapseIcon) headerCollapseIcon.innerText = 'menu_open';
-        localStorage.setItem('sidebar_collapsed', 'false');
+        if (saveToStorage && window.innerWidth >= 768) {
+            localStorage.setItem('sidebar_collapsed', 'false');
+        }
     }
 }
 
 // Restore sidebar collapse state and auto-fit textareas on page load
 document.addEventListener('DOMContentLoaded', () => {
     updateVisibleRowCount();
-    if (localStorage.getItem('sidebar_collapsed') === 'true') {
-        setSidebarCollapsed(true);
+    if (window.innerWidth >= 768 && localStorage.getItem('sidebar_collapsed') === 'true') {
+        setSidebarCollapsed(true, false);
     }
 });
 
@@ -1488,12 +1524,124 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
+// Export leads from currently active tab to an Excel sheet (.xlsx)
+function exportLeadsToExcel() {
+    // Blur any active input so any pending typing is committed
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+    }
+
+    const rows = document.querySelectorAll('#leadsTableBody tr.sheet-row');
+    const data = [];
+    let count = 0;
+
+    rows.forEach(row => {
+        const leadId = row.getAttribute('data-lead-id');
+        const clientName = row.querySelector('[data-field="client_name"]')?.value?.trim() || '';
+        const niche = row.querySelector('[data-field="niche"]')?.value?.trim() || '';
+        const contact = row.querySelector('[data-field="contact_number"]')?.value?.trim() || '';
+        const incomingDate = row.querySelector('[data-field="lead_incoming_date"]')?.value?.trim() || '';
+        const quoted = row.querySelector('[data-field="quoted_amount"]')?.value?.trim() || '';
+        const sold = row.querySelector('[data-field="sold_amount"]')?.value?.trim() || '';
+        const status = row.querySelector('[data-field="status"]')?.value?.trim() || '';
+        const note = row.querySelector('[data-field="note"]')?.value?.trim() || '';
+
+        let scopes = '';
+        try {
+            const rawScopes = JSON.parse(row.getAttribute('data-scopes') || '[]');
+            scopes = Array.isArray(rawScopes) ? rawScopes.join(', ') : '';
+        } catch(e) {
+            scopes = '';
+        }
+
+        // Only export rows that have leadId or actual content
+        if (!leadId && !clientName && !niche && !contact && !quoted && !sold && !status && !note && !scopes) {
+            return;
+        }
+
+        count++;
+        const rowCampaign = row.getAttribute('data-campaign') || (SELECTED_TAB !== 'all' ? SELECTED_TAB : CURRENT_CAMPAIGN);
+
+        data.push({
+            '#': count,
+            'Client Name': clientName,
+            'Niche': niche,
+            'Contact Number': contact,
+            'Work Scope': scopes,
+            'Incoming Date': incomingDate,
+            'Quoted Amount': quoted,
+            'Sold Amount': sold,
+            'Status': status,
+            'Note / Activity': note,
+            'Campaign / Tab': rowCampaign
+        });
+    });
+
+    const currentTabName = (SELECTED_TAB === 'all') ? 'All Leads' : (SELECTED_TAB || CURRENT_CAMPAIGN || 'Leads');
+
+    if (data.length === 0) {
+        alert(`No leads found in tab "${currentTabName}" to export.`);
+        return;
+    }
+
+    if (typeof XLSX === 'undefined') {
+        // Fallback to backend route if XLSX library is unavailable
+        const searchVal = encodeURIComponent("{{ request('search', '') }}");
+        window.location.href = `{{ route('leads.export') }}?campaign=${encodeURIComponent(SELECTED_TAB)}&search=${searchVal}`;
+        return;
+    }
+
+    try {
+        const ws = XLSX.utils.json_to_sheet(data);
+
+        // Configure column widths
+        ws['!cols'] = [
+            { wch: 6 },   // #
+            { wch: 22 },  // Client Name
+            { wch: 20 },  // Niche
+            { wch: 18 },  // Contact Number
+            { wch: 24 },  // Work Scope
+            { wch: 15 },  // Incoming Date
+            { wch: 15 },  // Quoted Amount
+            { wch: 15 },  // Sold Amount
+            { wch: 24 },  // Status
+            { wch: 30 },  // Note / Activity
+            { wch: 18 }   // Campaign / Tab
+        ];
+
+        // Format Contact Number cells as Text ('s') so Excel preserves leading zero and + signs
+        for (let r = 0; r < data.length; r++) {
+            const cellRef = XLSX.utils.encode_cell({ r: r + 1, c: 3 });
+            if (ws[cellRef]) {
+                ws[cellRef].t = 's';
+            }
+        }
+
+        const wb = XLSX.utils.book_new();
+        const safeSheetName = currentTabName.replace(/[\\/?*\[\]:]/g, '_').substring(0, 31);
+        XLSX.utils.book_append_sheet(wb, ws, safeSheetName);
+
+        const safeFileNameCampaign = currentTabName.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const today = new Date().toISOString().split('T')[0];
+        const fileName = `Leads_${safeFileNameCampaign}_${today}.xlsx`;
+
+        XLSX.writeFile(wb, fileName);
+        showToast(`Exported ${data.length} leads to Excel ✓`);
+    } catch (err) {
+        console.error('XLSX export error:', err);
+        const searchVal = encodeURIComponent("{{ request('search', '') }}");
+        window.location.href = `{{ route('leads.export') }}?campaign=${encodeURIComponent(SELECTED_TAB)}&search=${searchVal}`;
+    }
+}
+
 function openImportModal() {
-    document.getElementById('importModal').classList.remove('hidden');
+    const modal = document.getElementById('importModal');
+    if (modal) modal.classList.remove('hidden');
 }
 
 function closeImportModal() {
-    document.getElementById('importModal').classList.add('hidden');
+    const modal = document.getElementById('importModal');
+    if (modal) modal.classList.add('hidden');
 }
 
 function openNewTabModal() {

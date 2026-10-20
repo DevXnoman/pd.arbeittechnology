@@ -317,6 +317,84 @@ class LeadController extends Controller
             ->with('success', 'Lead successfully converted into a Project!');
     }
 
+    public function export(Request $request)
+    {
+        $campaign = $request->input('campaign');
+        $query = Lead::query();
+
+        if ($campaign && $campaign !== 'all') {
+            $query->where('campaign_month', $campaign);
+        }
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('client_name', 'like', "%{$search}%")
+                  ->orWhere('contact_number', 'like', "%{$search}%")
+                  ->orWhere('niche', 'like', "%{$search}%")
+                  ->orWhere('status', 'like', "%{$search}%")
+                  ->orWhere('note', 'like', "%{$search}%");
+            });
+        }
+
+        $leads = $query->orderBy('id', 'asc')->get();
+
+        $campaignLabel = ($campaign && $campaign !== 'all') ? preg_replace('/[^a-zA-Z0-9_-]/', '_', $campaign) : 'All_Leads';
+        $fileName = "Leads_{$campaignLabel}_" . date('Y-m-d') . ".csv";
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $callback = function () use ($leads) {
+            $handle = fopen('php://output', 'w');
+            // Write UTF-8 BOM so Microsoft Excel opens it correctly with all Unicode characters
+            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            fputcsv($handle, [
+                '#',
+                'Client Name',
+                'Niche',
+                'Contact Number',
+                'Work Scope',
+                'Incoming Date',
+                'Quoted Amount',
+                'Sold Amount',
+                'Status',
+                'Note / Activity',
+                'Campaign / Tab'
+            ]);
+
+            foreach ($leads as $index => $lead) {
+                $scopes = is_array($lead->work_scope) ? implode(', ', $lead->work_scope) : ($lead->work_scope ?? '');
+                $contact = $lead->contact_number ? "\t" . $lead->contact_number : '';
+                $incomingDate = $lead->lead_incoming_date ? \Carbon\Carbon::parse($lead->lead_incoming_date)->format('Y-m-d') : '';
+
+                fputcsv($handle, [
+                    $index + 1,
+                    $lead->client_name ?? '',
+                    $lead->niche ?? '',
+                    $contact,
+                    $scopes,
+                    $incomingDate,
+                    $lead->quoted_amount ?? '',
+                    $lead->sold_amount ?? '',
+                    $lead->status ?? '',
+                    $lead->note ?? '',
+                    $lead->campaign_month ?? '',
+                ]);
+            }
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     public function import(Request $request)
     {
         $request->validate([

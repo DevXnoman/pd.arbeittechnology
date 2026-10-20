@@ -55,6 +55,9 @@
         <a class="flex items-center px-3 py-2 bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 rounded-md text-xs font-semibold shadow-xs" href="{{ route('leads.index') }}">
             <img src="{{ asset('images/icons/leads.png') }}" alt="Lead Tracking" class="w-4 h-4 mr-2 object-contain shrink-0"/> Lead Tracking
         </a>
+        <a class="flex items-center px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-md text-xs font-medium transition-all" href="{{ route('accounts.index') }}">
+            <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-cyan-400 mr-2 shrink-0">account_balance_wallet</span> Accounts
+        </a>
         <a class="flex items-center px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-md text-xs font-medium transition-all" href="{{ route('invoices.create') }}">
             <img src="{{ asset('images/icons/receipt.png') }}" alt="Money Receipt" class="w-4 h-4 mr-2 object-contain shrink-0"/> Money Receipt
         </a>

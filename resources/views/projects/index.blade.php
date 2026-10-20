@@ -142,47 +142,61 @@
 <div id="mobileBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden md:hidden transition-opacity"></div>
 
 <!-- SideNavBar Drawer -->
-<aside id="sidebar" class="fixed md:static inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col bg-slate-900 text-white h-full w-52 border-r border-slate-800 shadow-xl md:shadow-none py-6 px-3 space-y-1.5 z-50 md:z-20 shrink-0">
-    <div class="mb-6 px-1 flex flex-col space-y-2.5">
+<aside id="sidebar" class="fixed md:relative inset-y-0 left-0 md:inset-auto transform -translate-x-full md:translate-x-0 transition-all duration-300 ease-in-out flex flex-col bg-slate-900 text-white h-full w-52 border-r border-slate-800 shadow-xl md:shadow-none py-6 px-3 space-y-1.5 z-50 md:z-20 shrink-0">
+    <!-- Floating Edge Collapse/Expand Toggle Button (Desktop Only) -->
+    <button type="button" 
+            onclick="toggleDesktopSidebar()" 
+            id="desktopCollapseBtn"
+            class="hidden md:flex absolute -right-3 top-7 z-30 w-6 h-6 rounded-full bg-slate-900 border border-slate-700/90 text-slate-300 hover:text-white hover:bg-slate-800 shadow-md items-center justify-center transition-all duration-200 hover:scale-110 focus:outline-none cursor-pointer" 
+            title="Toggle Sidebar (Collapse / Expand)">
+        <span class="material-symbols-outlined text-[16px] transition-transform duration-200" id="sidebarCollapseIcon">chevron_left</span>
+    </button>
+
+    <div class="mb-6 px-1 flex flex-col space-y-2.5 sidebar-header-wrapper transition-all">
         <div class="flex items-center justify-between w-full">
-            <div class="bg-white rounded-xl p-2 flex items-center justify-center w-full min-w-0 shadow-sm">
+            <div class="bg-white rounded-xl p-2 flex items-center justify-center w-full min-w-0 shadow-sm sidebar-logo transition-all">
                 <img class="h-11 w-auto max-w-full object-contain" src="{{ asset('images/logo.png') }}" alt="Logo"/>
             </div>
-            <button type="button" onclick="toggleMobileSidebar()" class="md:hidden text-white/70 hover:text-white p-1 ml-1.5 shrink-0">
+            <!-- Mobile Close Button -->
+            <button type="button" onclick="toggleMobileSidebar()" class="md:hidden text-white/70 hover:text-white p-1 ml-1.5 shrink-0 cursor-pointer" title="Close Sidebar">
                 <span class="material-symbols-outlined text-[20px]">close</span>
             </button>
         </div>
-        <div class="min-w-0">
+        <div class="min-w-0 sidebar-text-group transition-all">
             <h1 class="font-headline-md text-xs font-bold text-cyan-400 leading-snug">Lead & Project Management System</h1>
         </div>
     </div>
     <nav class="flex-1 space-y-1.5 overflow-y-auto pr-1">
         <!-- Active Tab: Dashboard -->
-        <a class="flex items-center px-3 py-2.5 bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 rounded-lg transition-all font-semibold shadow-xs" href="{{ route('projects.index') }}">
-            <img src="{{ asset('images/icons/dashboard.png') }}" alt="Dashboard" class="w-5 h-5 mr-2.5 object-contain shrink-0"/>
-            <span class="font-label-md text-xs text-cyan-300 font-semibold">Dashboard</span>
+        <a class="flex items-center px-3 py-2.5 bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 rounded-lg transition-all font-semibold shadow-xs group" href="{{ route('projects.index') }}" title="Dashboard">
+            <img src="{{ asset('images/icons/dashboard.png') }}" alt="Dashboard" class="w-5 h-5 mr-2.5 object-contain sidebar-icon shrink-0"/>
+            <span class="font-label-md text-xs text-cyan-300 font-semibold sidebar-text whitespace-nowrap">Dashboard</span>
         </a>
-        <a class="flex items-center px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all font-medium group" href="{{ route('projects.create') }}">
-            <img src="{{ asset('images/icons/add-project.png') }}" alt="Add New Project" class="w-5 h-5 mr-2.5 object-contain shrink-0"/>
-            <span class="font-label-md text-xs">Add New Project</span>
+        <a class="flex items-center px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all font-medium group" href="{{ route('projects.create') }}" title="Add New Project">
+            <img src="{{ asset('images/icons/add-project.png') }}" alt="Add New Project" class="w-5 h-5 mr-2.5 object-contain sidebar-icon shrink-0"/>
+            <span class="font-label-md text-xs sidebar-text whitespace-nowrap">Add New Project</span>
         </a>
-        <a class="flex items-center px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all font-medium group" href="{{ route('projects.list') }}">
-            <img src="{{ asset('images/icons/projects.png') }}" alt="Projects" class="w-5 h-5 mr-2.5 object-contain shrink-0"/>
-            <span class="font-label-md text-xs">Projects</span>
+        <a class="flex items-center px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all font-medium group" href="{{ route('projects.list') }}" title="Projects">
+            <img src="{{ asset('images/icons/projects.png') }}" alt="Projects" class="w-5 h-5 mr-2.5 object-contain sidebar-icon shrink-0"/>
+            <span class="font-label-md text-xs sidebar-text whitespace-nowrap">Projects</span>
         </a>
-        <a class="flex items-center px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all font-medium group" href="{{ route('leads.index') }}">
-            <img src="{{ asset('images/icons/leads.png') }}" alt="Lead Tracking" class="w-5 h-5 mr-2.5 object-contain shrink-0"/>
-            <span class="font-label-md text-xs">Lead Tracking</span>
+        <a class="flex items-center px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all font-medium group" href="{{ route('leads.index') }}" title="Lead Tracking">
+            <img src="{{ asset('images/icons/leads.png') }}" alt="Lead Tracking" class="w-5 h-5 mr-2.5 object-contain sidebar-icon shrink-0"/>
+            <span class="font-label-md text-xs sidebar-text whitespace-nowrap">Lead Tracking</span>
         </a>
-        <a class="flex items-center px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all font-medium group" href="{{ route('invoices.create') }}">
-            <img src="{{ asset('images/icons/receipt.png') }}" alt="Money Receipt" class="w-5 h-5 mr-2.5 object-contain shrink-0"/>
-            <span class="font-label-md text-xs">Money Receipt</span>
+        <a class="flex items-center px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all font-medium group" href="{{ route('accounts.index') }}" title="Accounts">
+            <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-cyan-400 mr-2.5 sidebar-icon shrink-0">account_balance_wallet</span>
+            <span class="font-label-md text-xs sidebar-text whitespace-nowrap">Accounts</span>
+        </a>
+        <a class="flex items-center px-3 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all font-medium group" href="{{ route('invoices.create') }}" title="Money Receipt">
+            <img src="{{ asset('images/icons/receipt.png') }}" alt="Money Receipt" class="w-5 h-5 mr-2.5 object-contain sidebar-icon shrink-0"/>
+            <span class="font-label-md text-xs sidebar-text whitespace-nowrap">Money Receipt</span>
         </a>
     </nav>
 </aside>
 
 <!-- Main Content Area -->
-<main class="flex-1 flex flex-col h-full overflow-hidden bg-surface-subtle">
+<main class="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden bg-surface-subtle">
 
     <!-- TopAppBar -->
     <header class="bg-surface border-b border-border-light flex justify-between sm:justify-end items-center w-full px-4 sm:px-5 h-14 shrink-0 z-10 shadow-sm">
@@ -544,9 +558,90 @@
     function toggleMobileSidebar() {
         const sidebar = document.getElementById('sidebar');
         const backdrop = document.getElementById('mobileBackdrop');
-        if (sidebar) sidebar.classList.toggle('-translate-x-full');
-        if (backdrop) backdrop.classList.toggle('hidden');
+        if (!sidebar) return;
+        const isHidden = sidebar.classList.contains('-translate-x-full');
+        if (isHidden) {
+            sidebar.classList.remove('-translate-x-full');
+            if (window.innerWidth < 768) {
+                setSidebarCollapsed(false, false);
+            }
+            if (backdrop) backdrop.classList.remove('hidden');
+        } else {
+            sidebar.classList.add('-translate-x-full');
+            if (backdrop) backdrop.classList.add('hidden');
+        }
     }
+
+    function toggleDesktopSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        if (!sidebar) return;
+
+        if (window.innerWidth < 768) {
+            // On mobile: collapse button slides drawer away
+            sidebar.classList.add('-translate-x-full');
+            const backdrop = document.getElementById('mobileBackdrop');
+            if (backdrop) backdrop.classList.add('hidden');
+        } else {
+            // On desktop: toggle rail
+            const isCollapsed = sidebar.classList.contains('w-16');
+            setSidebarCollapsed(!isCollapsed, true);
+        }
+    }
+
+    function setSidebarCollapsed(collapse, saveToStorage = true) {
+        const sidebar = document.getElementById('sidebar');
+        if (!sidebar) return;
+        const textGroup = sidebar.querySelector('.sidebar-text-group');
+        const logo = sidebar.querySelector('.sidebar-logo');
+        const headerWrapper = sidebar.querySelector('.sidebar-header-wrapper');
+        const texts = sidebar.querySelectorAll('.sidebar-text');
+        const icons = sidebar.querySelectorAll('.sidebar-icon');
+        const sidebarCollapseIcon = document.getElementById('sidebarCollapseIcon');
+
+        if (collapse) {
+            sidebar.classList.remove('w-52', 'px-3');
+            sidebar.classList.add('w-16', 'px-2');
+            if (textGroup) textGroup.classList.add('hidden');
+            if (logo) logo.classList.add('hidden');
+            if (headerWrapper) {
+                headerWrapper.classList.remove('justify-between');
+                headerWrapper.classList.add('justify-center');
+            }
+            texts.forEach(t => t.classList.add('hidden'));
+            icons.forEach(i => {
+                i.classList.remove('mr-2.5');
+                i.classList.add('mx-auto');
+            });
+            if (sidebarCollapseIcon) sidebarCollapseIcon.innerText = 'chevron_right';
+            if (saveToStorage && window.innerWidth >= 768) {
+                localStorage.setItem('sidebar_collapsed', 'true');
+            }
+        } else {
+            sidebar.classList.remove('w-16', 'px-2');
+            sidebar.classList.add('w-52', 'px-3');
+            if (textGroup) textGroup.classList.remove('hidden');
+            if (logo) logo.classList.remove('hidden');
+            if (headerWrapper) {
+                headerWrapper.classList.remove('justify-center');
+                headerWrapper.classList.add('justify-between');
+            }
+            texts.forEach(t => t.classList.remove('hidden'));
+            icons.forEach(i => {
+                i.classList.remove('mx-auto');
+                i.classList.add('mr-2.5');
+            });
+            if (sidebarCollapseIcon) sidebarCollapseIcon.innerText = 'chevron_left';
+            if (saveToStorage && window.innerWidth >= 768) {
+                localStorage.setItem('sidebar_collapsed', 'false');
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.innerWidth >= 768 && localStorage.getItem('sidebar_collapsed') === 'true') {
+            setSidebarCollapsed(true, false);
+        }
+    });
 </script>
 </body>
 </html>

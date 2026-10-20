@@ -5,6 +5,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LeadController;
+use App\Http\Controllers\AccountController;
 
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -19,7 +20,19 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard', [ProjectController::class, 'index'])->name('projects.index');
     Route::get('/projects', [ProjectController::class, 'list'])->name('projects.list');
+
+    // Accounts & Finance Module Routes
+    Route::get('/accounts', [AccountController::class, 'index'])->name('accounts.index');
+    Route::get('/accounts/export', [AccountController::class, 'export'])->name('accounts.export');
+    Route::post('/accounts/expenses', [AccountController::class, 'storeExpense'])->name('accounts.expenses.store');
+    Route::put('/accounts/expenses/{expense}', [AccountController::class, 'updateExpense'])->name('accounts.expenses.update');
+    Route::delete('/accounts/expenses/{expense}', [AccountController::class, 'destroyExpense'])->name('accounts.expenses.destroy');
+
+    // Money Receipt & Invoices
     Route::get('/invoices', [InvoiceController::class, 'create'])->name('invoices.create');
+    Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
+    Route::get('/invoices/{receipt}', [InvoiceController::class, 'show'])->name('invoices.show');
+    Route::delete('/invoices/{receipt}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
 
     Route::get('/projects/create', [ProjectController::class, 'create'])->name('projects.create');
     Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
@@ -32,6 +45,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
     Route::get('/leads/create', [LeadController::class, 'create'])->name('leads.create');
     Route::post('/leads', [LeadController::class, 'store'])->name('leads.store');
+    Route::get('/leads/export', [LeadController::class, 'export'])->name('leads.export');
     Route::post('/leads/import', [LeadController::class, 'import'])->name('leads.import');
     Route::delete('/leads/campaigns/delete', [LeadController::class, 'destroyCampaign'])->name('leads.campaigns.destroy');
     Route::get('/leads/{lead}', [LeadController::class, 'show'])->name('leads.show');
